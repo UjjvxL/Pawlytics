@@ -1,0 +1,147 @@
+{
+  "name": "Report",
+  "type": "object",
+  "properties": {
+    "reporter_id": {
+      "type": "string"
+    },
+    "reporter_name": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "sighting",
+        "approach_followed",
+        "chase",
+        "aggressive_interaction",
+        "contact_bite",
+        "injured_animal",
+        "other"
+      ]
+    },
+    "severity_level": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "L1=Sighting, L2=Approach/Followed, L3=Chase, L4=Aggressive Interaction, L5=Contact/Bite"
+    },
+    "description": {
+      "type": "string"
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    },
+    "location_label": {
+      "type": "string"
+    },
+    "ward": {
+      "type": "string"
+    },
+    "incident_timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "under_review",
+        "verified",
+        "rejected",
+        "duplicate"
+      ],
+      "default": "under_review"
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "verified",
+        "rejected",
+        "needs_more_info"
+      ],
+      "default": "pending"
+    },
+    "duplicate_of": {
+      "type": "string"
+    },
+    "evidence_url": {
+      "type": "string"
+    },
+    "dog_count": {
+      "type": "integer",
+      "default": 1
+    },
+    "group_detected": {
+      "type": "boolean",
+      "default": false
+    },
+    "context_tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "near_waste",
+          "near_school",
+          "near_road",
+          "near_park",
+          "group_presence",
+          "morning",
+          "afternoon",
+          "evening",
+          "night"
+        ]
+      }
+    },
+    "cv_dog_count": {
+      "type": "integer"
+    },
+    "cv_confidence": {
+      "type": "number"
+    },
+    "cv_group_detected": {
+      "type": "boolean"
+    },
+    "cv_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "processed",
+        "low_confidence",
+        "no_image"
+      ],
+      "default": "no_image"
+    },
+    "confidence_score": {
+      "type": "number"
+    },
+    "moderator_notes": {
+      "type": "string"
+    },
+    "reviewer_id": {
+      "type": "string"
+    },
+    "is_demo": {
+      "type": "boolean",
+      "default": false
+    },
+    "suspicious_flag": {
+      "type": "boolean",
+      "default": false
+    },
+    "trust_weight": {
+      "type": "number",
+      "default": 1.0
+    }
+  },
+  "required": [
+    "category",
+    "severity_level",
+    "latitude",
+    "longitude",
+    "incident_timestamp"
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "name": "Ward",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "ward_number": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string",
+      "default": "Bengaluru"
+    },
+    "center_lat": {
+      "type": "number"
+    },
+    "center_lng": {
+      "type": "number"
+    },
+    "risk_score": {
+      "type": "number",
+      "default": 0
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "low",
+        "moderate",
+        "elevated",
+        "high",
+        "very_high"
+      ],
+      "default": "unknown"
+    },
+    "confidence": {
+      "type": "string",
+      "enum": [
+        "insufficient",
+        "low",
+        "moderate",
+        "high"
+      ],
+      "default": "insufficient"
+    },
+    "report_count": {
+      "type": "integer",
+      "default": 0
+    },
+    "verified_report_count": {
+      "type": "integer",
+      "default": 0
+    },
+    "bite_count": {
+      "type": "integer",
+      "default": 0
+    },
+    "active_hotspot_count": {
+      "type": "integer",
+      "default": 0
+    },
+    "explanation": {
+      "type": "string"
+    },
+    "last_calculated": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "is_demo": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "name",
+    "city"
+  ]
+}
