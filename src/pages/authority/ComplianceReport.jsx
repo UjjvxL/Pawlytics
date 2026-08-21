@@ -13,8 +13,8 @@ export default function ComplianceReport() {
   const [reportGenerated, setReportGenerated] = useState(false);
 
   const [config, setConfig] = useState({
-    municipality: "Bruhat Bengaluru Mahanagara Palike (BBMP)",
-    ward: "All Wards — Koramangala Zone Pilot",
+    municipality: "New Okhla Industrial Development Authority (NOIDA)",
+    ward: "All Sectors — Sector 62 Zone Pilot",
     period: "30d",
     includeActions: true,
     includeMethodology: true,
@@ -58,7 +58,7 @@ export default function ComplianceReport() {
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-bold text-slate-800 font-display">Compliance Report Generator</h1>
-        <p className="text-slate-500 text-sm mt-1">Generate municipal ward-level conflict intelligence reports</p>
+        <p className="text-slate-500 text-sm mt-1">Generate municipal sector-level conflict intelligence reports</p>
       </div>
 
       {/* Config panel */}
@@ -72,9 +72,9 @@ export default function ComplianceReport() {
               onChange={e => setConfig(c => ({ ...c, municipality: e.target.value }))}
               className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-900/30"
             >
-              <option>Bruhat Bengaluru Mahanagara Palike (BBMP)</option>
-              <option>Greater Hyderabad Municipal Corporation</option>
-              <option>Municipal Corporation of Delhi</option>
+              <option>New Okhla Industrial Development Authority (NOIDA)</option>
+              <option>Gautam Buddh Nagar Nagar Nigam</option>
+              <option>Ghaziabad Municipal Corporation</option>
             </select>
           </div>
           <div>
@@ -84,10 +84,10 @@ export default function ComplianceReport() {
               onChange={e => setConfig(c => ({ ...c, ward: e.target.value }))}
               className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-900/30"
             >
-              <option>All Wards — Koramangala Zone Pilot</option>
-              <option>Koramangala 5th Block</option>
-              <option>HSR Layout Sector 1</option>
-              <option>BTM Layout 2nd Stage</option>
+              <option>All Sectors — Sector 62 Zone Pilot</option>
+              <option>Sector 62 Noida</option>
+              <option>Sector 18 Atta Market</option>
+              <option>Sector 50 Noida</option>
             </select>
           </div>
           <div>
@@ -148,10 +148,10 @@ export default function ComplianceReport() {
                 Executive Summary
               </h2>
               <div className="bg-slate-50 rounded-xl p-4 text-sm text-slate-700 leading-relaxed">
-                During the reporting period, the Koramangala Zone pilot area recorded <strong>{reports.length} total reports</strong> of human–street dog conflict interactions,
+                During the reporting period, the Sector 62 Zone pilot area (Noida) recorded <strong>{reports.length} total reports</strong> of human–street dog conflict interactions,
                 of which <strong>{verifiedReports.length} were verified</strong> by moderators. The data reveals concentrated conflict clusters in
                 {activeHotspots.length > 0 && ` ${activeHotspots.length} active hotspot areas`}, with the highest-density cluster
-                at Koramangala 5th Block (waste zone). <strong>{biteReports.length} contact/bite incidents</strong> were verified during this period,
+                at Sector 62 Noida (IT corridor waste zone). <strong>{biteReports.length} contact/bite incidents</strong> were verified during this period,
                 all requiring immediate public health attention.
               </div>
             </section>

@@ -5,12 +5,12 @@ import RiskBadge, { ConfidenceBadge } from "@/components/RiskBadge";
 import { MapPin, TrendingUp } from "lucide-react";
 
 const WARD_LIST = [
-  "Koramangala 5th Block",
-  "Indiranagar 12th Main",
-  "BTM Layout 2nd Stage",
-  "HSR Layout Sector 1",
-  "Domlur Extension",
-  "Ejipura",
+  "Sector 62 Noida",
+  "Sector 18 Atta Market",
+  "Sector 37 Noida",
+  "Sector 50 Noida",
+  "Sector 93 Noida",
+  "Sector 12 Noida",
 ];
 
 export default function WardsPage() {
@@ -40,7 +40,7 @@ export default function WardsPage() {
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-bold text-slate-800 font-display">Wards / Sectors</h1>
-        <p className="text-slate-500 text-sm mt-1">Risk summary per ward — Koramangala Zone Pilot</p>
+        <p className="text-slate-500 text-sm mt-1">Risk summary per sector — Sector 62 Zone Pilot</p>
       </div>
 
       <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">

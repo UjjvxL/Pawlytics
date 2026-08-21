@@ -79,7 +79,7 @@ export default function AuthorityOverview() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-800 font-display">Dashboard Overview</h1>
-        <p className="text-slate-500 text-sm mt-1">Bengaluru Pilot · Koramangala–HSR Zone · Last 30 days</p>
+        <p className="text-slate-500 text-sm mt-1">Noida Pilot · Sector 62 Zone · Last 30 days</p>
       </div>
 
       {/* Metrics */}

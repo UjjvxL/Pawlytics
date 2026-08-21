@@ -7,29 +7,29 @@ import RiskBadge from "@/components/RiskBadge";
 import "leaflet/dist/leaflet.css";
 
 const DEMO_LOCATIONS = [
-  "Koramangala 5th Block Market",
-  "HSR Layout BDA Complex",
-  "BTM Layout Bus Terminal",
-  "Indiranagar 100 Feet Road",
-  "Domlur Flyover",
-  "Ejipura Main Junction",
+  "Sector 62 IT Hub",
+  "Sector 18 Atta Market",
+  "Sector 37 Main Road",
+  "Sector 50 City Center",
+  "Sector 93 Expressway Junction",
+  "Sector 12 Community Market",
 ];
 
 const ROUTE_COORDS = {
-  "Koramangala 5th Block Market|HSR Layout BDA Complex": {
+  "Sector 62 IT Hub|Sector 18 Atta Market": {
     routes: [
       {
         name: "Route A",
-        label: "Via Outer Ring Road",
+        label: "Via Sector 37 Main Road",
         path: [
-          [12.9265, 77.6258],
-          [12.9220, 77.6240],
-          [12.9185, 77.6290],
-          [12.9150, 77.6340],
-          [12.9116, 77.6389],
+          [28.6260, 77.3620],
+          [28.6150, 77.3550],
+          [28.5950, 77.3500],
+          [28.5790, 77.3350],
+          [28.5710, 77.3260],
         ],
-        distance: 4.8,
-        time: 18,
+        distance: 6.2,
+        time: 22,
         color: "#DC2626",
         riskScore: 72,
         reportCount: 14,
@@ -37,16 +37,16 @@ const ROUTE_COORDS = {
       },
       {
         name: "Route B",
-        label: "Via Inner Ring Road",
+        label: "Via City Center Loop",
         path: [
-          [12.9265, 77.6258],
-          [12.9250, 77.6300],
-          [12.9200, 77.6330],
-          [12.9160, 77.6370],
-          [12.9116, 77.6389],
+          [28.6260, 77.3620],
+          [28.6200, 77.3500],
+          [28.6050, 77.3450],
+          [28.5860, 77.3340],
+          [28.5710, 77.3260],
         ],
-        distance: 5.1,
-        time: 20,
+        distance: 6.6,
+        time: 24,
         color: "#16A34A",
         riskScore: 38,
         reportCount: 5,
@@ -54,16 +54,16 @@ const ROUTE_COORDS = {
       },
       {
         name: "Route C",
-        label: "Via BTM Layout",
+        label: "Via Service Road 16",
         path: [
-          [12.9265, 77.6258],
-          [12.9200, 77.6180],
-          [12.9160, 77.6220],
-          [12.9130, 77.6300],
-          [12.9116, 77.6389],
+          [28.6260, 77.3620],
+          [28.6180, 77.3540],
+          [28.6000, 77.3400],
+          [28.5820, 77.3300],
+          [28.5710, 77.3260],
         ],
-        distance: 5.6,
-        time: 24,
+        distance: 6.4,
+        time: 20,
         color: "#D97706",
         riskScore: 55,
         reportCount: 9,
@@ -109,19 +109,19 @@ export default function RouteCheck() {
     routes: [
       {
         name: "Route A", label: "Direct Route",
-        path: [[12.9279, 77.6271], [12.9350, 77.6300], [12.9400, 77.6350]],
+        path: [[28.5740, 77.3410], [28.5850, 77.3360], [28.5950, 77.3400]],
         distance: 3.2, time: 12, color: "#D97706", riskScore: 45, reportCount: 6, hotspotCount: 1,
       },
       {
         name: "Route B", label: "Alternate Route",
-        path: [[12.9279, 77.6271], [12.9300, 77.6200], [12.9360, 77.6250]],
+        path: [[28.5740, 77.3410], [28.5790, 77.3330], [28.5870, 77.3360]],
         distance: 3.8, time: 15, color: "#16A34A", riskScore: 22, reportCount: 3, hotspotCount: 0,
       },
     ],
   });
 
   const best = routeData ? [...routeData.routes].sort((a, b) => a.riskScore - b.riskScore)[0] : null;
-  const mapCenter = [12.9220, 77.6270];
+  const mapCenter = [28.5850, 77.3410];
 
   return (
     <div className="min-h-screen bg-slate-50">

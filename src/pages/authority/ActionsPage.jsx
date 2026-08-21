@@ -29,7 +29,7 @@ export default function ActionsPage() {
   const [form, setForm] = useState({ action_type: "", note: "", location_label: "", ward_id: "" });
   const [submitting, setSubmitting] = useState(false);
 
-  const WARD_OPTIONS = ["Koramangala 5th Block", "HSR Layout Sector 1", "BTM Layout 2nd Stage", "Indiranagar 12th Main", "Domlur Extension", "Ejipura"];
+  const WARD_OPTIONS = ["Sector 62 Noida", "Sector 18 Atta Market", "Sector 37 Noida", "Sector 50 Noida", "Sector 93 Noida", "Sector 12 Noida"];
 
   useEffect(() => {
     base44.entities.AuthorityAction.filter({ is_demo: true })

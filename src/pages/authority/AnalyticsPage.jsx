@@ -70,7 +70,7 @@ export default function AnalyticsPage() {
   }
 
   // Ward breakdown
-  const wardData = ["Koramangala 5th Block", "Indiranagar 12th Main", "BTM Layout 2nd Stage", "HSR Layout Sector 1", "Domlur Extension", "Ejipura"].map(w => ({
+  const wardData = ["Sector 62 Noida", "Sector 18 Atta Market", "Sector 37 Noida", "Sector 50 Noida", "Sector 93 Noida", "Sector 12 Noida"].map(w => ({
     name: w.split(" ").slice(0, 2).join(" "),
     total: reports.filter(r => r.ward === w).length,
     verified: reports.filter(r => r.ward === w && r.verification_status === "verified").length,
@@ -94,7 +94,7 @@ export default function AnalyticsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-800 font-display">Analytics</h1>
-        <p className="text-slate-500 text-sm mt-1">Bengaluru Pilot · {reports.length} total reports</p>
+        <p className="text-slate-500 text-sm mt-1">Noida Pilot · {reports.length} total reports</p>
       </div>
 
       {/* Reports over time */}

@@ -5,9 +5,10 @@ import { base44 } from "@/api/base44Client";
 import { RISK_LEVELS, CATEGORY_LABELS, SEVERITY_LABELS } from "@/lib/riskEngine";
 import RiskBadge from "@/components/RiskBadge";
 import { Filter, Layers, Info } from "lucide-react";
+import { useTheme } from "@/lib/theme";
 import "leaflet/dist/leaflet.css";
 
-const DEMO_CENTER = [12.9279, 77.6271];
+const DEMO_CENTER = [28.5740, 77.3410];
 
 function createIncidentIcon(severity, verified) {
   const colors = { 1: "#6B7280", 2: "#D97706", 3: "#EA580C", 4: "#DC2626", 5: "#991B1B" };
@@ -22,6 +23,7 @@ function createIncidentIcon(severity, verified) {
 }
 
 export default function AuthorityMap() {
+  const { theme } = useTheme();
   const [reports, setReports] = useState([]);
   const [hotspots, setHotspots] = useState([]);
   const [pois, setPois] = useState([]);
@@ -96,7 +98,7 @@ export default function AuthorityMap() {
       {/* Map */}
       <div className="rounded-xl overflow-hidden border border-slate-200" style={{ height: "520px" }}>
         <MapContainer center={DEMO_CENTER} zoom={14} className="h-full w-full">
-          <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" attribution='&copy; OpenStreetMap contributors &copy; CARTO' />
+          <TileLayer url={theme === "dark" ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"} attribution='&copy; OpenStreetMap contributors &copy; CARTO' />
 
           {/* Hotspot circles */}
           {showHotspots && hotspots.map((h, i) => {

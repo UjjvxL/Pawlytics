@@ -35,21 +35,21 @@ const CONTEXT_OPTIONS = [
 ];
 
 const LOCATIONS = [
-  "Koramangala 5th Block",
-  "HSR Layout Sector 1",
-  "BTM Layout 2nd Stage",
-  "Indiranagar 12th Main",
-  "Domlur Extension",
-  "Ejipura",
+  "Sector 62 Noida",
+  "Sector 18 Atta Market",
+  "Sector 37 Noida",
+  "Sector 50 Noida",
+  "Sector 93 Noida",
+  "Sector 12 Noida",
 ];
 
 const DEMO_COORDS = {
-  "Koramangala 5th Block": { lat: 12.9265, lng: 77.6258 },
-  "HSR Layout Sector 1": { lat: 12.9116, lng: 77.6389 },
-  "BTM Layout 2nd Stage": { lat: 12.9142, lng: 77.6098 },
-  "Indiranagar 12th Main": { lat: 12.9784, lng: 77.6408 },
-  "Domlur Extension": { lat: 12.9591, lng: 77.6378 },
-  "Ejipura": { lat: 12.9408, lng: 77.6276 },
+  "Sector 62 Noida": { lat: 28.6260, lng: 77.3620 },
+  "Sector 18 Atta Market": { lat: 28.5710, lng: 77.3260 },
+  "Sector 37 Noida": { lat: 28.5840, lng: 77.3540 },
+  "Sector 50 Noida": { lat: 28.5730, lng: 77.3895 },
+  "Sector 93 Noida": { lat: 28.4980, lng: 77.3980 },
+  "Sector 12 Noida": { lat: 28.5800, lng: 77.3300 },
 };
 
 export default function ReportIncident() {
@@ -96,7 +96,7 @@ export default function ReportIncident() {
   };
 
   const handleLocationSelect = (loc) => {
-    const coords = DEMO_COORDS[loc] || DEMO_COORDS["Koramangala 5th Block"];
+    const coords = DEMO_COORDS[loc] || DEMO_COORDS["Sector 62 Noida"];
     const jitter = () => (Math.random() - 0.5) * 0.004;
     setForm(f => ({
       ...f,
@@ -312,7 +312,7 @@ export default function ReportIncident() {
             </div>
             <button
               onClick={() => {
-                const loc = "Koramangala 5th Block";
+                const loc = "Sector 62 Noida";
                 handleLocationSelect(loc);
               }}
               className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border-2 border-dashed border-blue-300 text-blue-700 font-medium"

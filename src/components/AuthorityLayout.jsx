@@ -6,6 +6,8 @@ import {
   Menu, X, ChevronRight, LogOut, Shield
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import Logo from "@/components/Logo";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const NAV_ITEMS = [
   { to: "/authority", icon: LayoutDashboard, label: "Overview", end: true },
@@ -32,8 +34,8 @@ export default function AuthorityLayout() {
         <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
           {sidebarOpen && (
             <div>
-              <div className="text-white font-bold text-lg font-display tracking-tight">Pawlytics</div>
-              <div className="text-blue-300 text-xs mt-0.5">Authority Dashboard</div>
+              <Logo onDark size={28} />
+              <div className="text-blue-300 text-xs mt-1">Authority Dashboard</div>
             </div>
           )}
           <button
@@ -87,9 +89,10 @@ export default function AuthorityLayout() {
             <span className="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
               Demo / Pilot Data
             </span>
-            <span className="text-xs text-slate-500">Bengaluru Pilot — Koramangala Zone</span>
+            <span className="text-xs text-slate-500">Noida Pilot — Sector 62 Zone</span>
           </div>
           <div className="flex items-center gap-3 text-sm text-slate-600">
+            <ThemeToggle />
             <span className="font-medium">Authority User</span>
             <button
               onClick={() => base44.auth.logout("/")}

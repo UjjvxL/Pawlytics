@@ -5,9 +5,10 @@ import { base44 } from "@/api/base44Client";
 import { RISK_LEVELS, CATEGORY_LABELS, SEVERITY_LABELS } from "@/lib/riskEngine";
 import RiskBadge, { ConfidenceBadge } from "@/components/RiskBadge";
 import { Filter, X, Layers, AlertTriangle, MapPin, Info } from "lucide-react";
+import { useTheme } from "@/lib/theme";
 import "leaflet/dist/leaflet.css";
 
-const DEMO_CENTER = [12.9279, 77.6271];
+const DEMO_CENTER = [28.5740, 77.3410];
 
 const POI_COLORS = {
   school: "#3B82F6",
@@ -60,6 +61,7 @@ const SEVERITY_FILTERS = [
 ];
 
 export default function LiveMap() {
+  const { theme } = useTheme();
   const [reports, setReports] = useState([]);
   const [hotspots, setHotspots] = useState([]);
   const [pois, setPois] = useState([]);
@@ -123,7 +125,9 @@ export default function LiveMap() {
         zoomControl={false}
       >
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          url={theme === "dark"
+            ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"}
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
 

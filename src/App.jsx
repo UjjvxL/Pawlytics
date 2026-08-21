@@ -7,6 +7,8 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import RoleRoute from '@/components/RoleRoute';
+import { ThemeProvider } from '@/lib/theme';
 
 // Auth pages
 import Login from '@/pages/Login';
@@ -78,23 +80,25 @@ const AuthenticatedApp = () => {
           <Route path="/my-reports" element={<MyReports />} />
           <Route path="/safety" element={<SafetyGuide />} />
         </Route>
-        
+
         {/* Report is full-screen (no bottom nav) */}
         <Route path="/report" element={<ReportIncident />} />
 
-        {/* Authority Dashboard */}
-        <Route path="/authority" element={<AuthorityLayout />}>
-          <Route index element={<AuthorityOverview />} />
-          <Route path="map" element={<AuthorityMap />} />
-          <Route path="reports" element={<ReportsPage />} />
-          <Route path="queue" element={<VerificationQueue />} />
-          <Route path="hotspots" element={<HotspotsPage />} />
-          <Route path="wards" element={<WardsPage />} />
-          <Route path="analytics" element={<AnalyticsPage />} />
-          <Route path="actions" element={<ActionsPage />} />
-          <Route path="compliance" element={<ComplianceReport />} />
-          <Route path="layers" element={<DataLayers />} />
-          <Route path="settings" element={<SettingsPlaceholder />} />
+        {/* Authority Dashboard — admin role required */}
+        <Route element={<RoleRoute requiredRole="admin" />}>
+          <Route path="/authority" element={<AuthorityLayout />}>
+            <Route index element={<AuthorityOverview />} />
+            <Route path="map" element={<AuthorityMap />} />
+            <Route path="reports" element={<ReportsPage />} />
+            <Route path="queue" element={<VerificationQueue />} />
+            <Route path="hotspots" element={<HotspotsPage />} />
+            <Route path="wards" element={<WardsPage />} />
+            <Route path="analytics" element={<AnalyticsPage />} />
+            <Route path="actions" element={<ActionsPage />} />
+            <Route path="compliance" element={<ComplianceReport />} />
+            <Route path="layers" element={<DataLayers />} />
+            <Route path="settings" element={<SettingsPlaceholder />} />
+          </Route>
         </Route>
       </Route>
 
@@ -116,15 +120,17 @@ function SettingsPlaceholder() {
 
 function App() {
   return (
-    <AuthProvider>
-      <QueryClientProvider client={queryClientInstance}>
-        <Router>
-          <ScrollToTop />
-          <AuthenticatedApp />
-        </Router>
-        <Toaster />
-      </QueryClientProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <QueryClientProvider client={queryClientInstance}>
+          <Router>
+            <ScrollToTop />
+            <AuthenticatedApp />
+          </Router>
+          <Toaster />
+        </QueryClientProvider>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }
 

@@ -140,8 +140,8 @@ export default function SafetyGuide() {
             <div className="font-semibold text-purple-800 text-sm">Nearest ARV Facilities (Demo Data)</div>
           </div>
           {[
-            { name: "St John's Medical Centre ARV", location: "Koramangala 5th Block" },
-            { name: "Bowring & Lady Curzon Hospital", location: "Indiranagar" },
+            { name: "Felix Hospital — Sector 73", location: "Sector 62 Noida" },
+            { name: "Metro Hospital — Sector 11", location: "Sector 12 Noida" },
           ].map((f, i) => (
             <div key={i} className="flex items-center gap-2 text-sm text-purple-700 mt-1.5">
               <span className="w-2 h-2 rounded-full bg-purple-400" />

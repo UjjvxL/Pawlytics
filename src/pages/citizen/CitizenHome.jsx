@@ -5,6 +5,8 @@ import { MapPin, AlertTriangle, Navigation, Map, Plus, ChevronRight, Bell, HelpC
 import { RISK_LEVELS, CONFIDENCE_LEVELS, calculateRiskScore } from "@/lib/riskEngine";
 import RiskBadge, { ConfidenceBadge } from "@/components/RiskBadge";
 import DemoBanner from "@/components/DemoBanner";
+import Logo from "@/components/Logo";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const SAFETY_TIPS = [
   "Maintain calm posture — do not run if approached by a dog.",
@@ -38,7 +40,7 @@ export default function CitizenHome() {
   }, []);
 
   const topHotspot = hotspots[0];
-  const currentLocality = "Koramangala 5th Block";
+  const currentLocality = "Sector 62 Noida";
   const localReports = reports.filter(r => r.ward === currentLocality);
   const riskResult = calculateRiskScore(localReports);
   const riskConfig = RISK_LEVELS[riskResult.level] || RISK_LEVELS.unknown;
@@ -59,10 +61,11 @@ export default function CitizenHome() {
       <header className="bg-[#1a2744] px-4 pt-8 pb-6 text-white">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <div className="text-xl font-bold tracking-tight font-display">Pawlytics</div>
-            <div className="text-blue-300 text-xs mt-0.5">Conflict Intelligence</div>
+            <Logo onDark size={30} />
+            <div className="text-blue-300 text-xs mt-1">Conflict Intelligence</div>
           </div>
           <div className="flex items-center gap-3">
+            <ThemeToggle className="rounded-full bg-white/10 hover:bg-white/20 text-white" />
             <button className="relative p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors">
               <Bell className="w-5 h-5" />
               {alerts.length > 0 && (
@@ -81,7 +84,7 @@ export default function CitizenHome() {
         <div className="flex items-center gap-1.5 text-blue-200 text-sm mb-4">
           <MapPin className="w-4 h-4" />
           <span className="font-medium">{currentLocality}</span>
-          <span className="text-blue-400">· Bengaluru</span>
+          <span className="text-blue-400">· Noida</span>
         </div>
 
         {/* Primary risk card */}
