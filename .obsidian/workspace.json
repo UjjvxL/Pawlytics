@@ -205,6 +205,7 @@
   },
   "active": "73abafaae2875dfe",
   "lastOpenFiles": [
+    "dist/assets/index-CkeMRu51.js",
     "dist/assets/index-BozO_gQp.js",
     "src/components/CameraVisionModal.jsx",
     "dist/index.html",
@@ -215,7 +216,6 @@
     "src/components/ArvEmergencyModal.jsx",
     "src/components/NationalConflictHeatmap.jsx",
     "dist/assets/index-ChoixC1O.js",
-    "src/lib/spatialClustering.js",
     "node_modules/protobufjs/ext/descriptor/README.md",
     "node_modules/protobufjs/ext/debug/README.md",
     "node_modules/protobufjs/README.md",
