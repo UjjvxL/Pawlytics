@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { reportsService } from "@/api/services";
 import { ChevronLeft, ChevronRight, MapPin, Camera, Check, Info } from "lucide-react";
 
 const CATEGORIES = [
@@ -136,7 +136,7 @@ export default function ReportIncident() {
     };
 
     try {
-      const created = await base44.entities.Report.create(reportData);
+      const created = await reportsService.create(reportData);
       setSubmitted(created);
     } catch (e) {
       console.error(e);

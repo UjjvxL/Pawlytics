@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { reportsService } from "@/api/services";
 import { RISK_LEVELS, calculateRiskScore } from "@/lib/riskEngine";
 import RiskBadge, { ConfidenceBadge } from "@/components/RiskBadge";
 import { MapPin } from "lucide-react";
@@ -18,7 +18,7 @@ export default function WardsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    base44.entities.Report.filter({ is_demo: true }).then(r => {
+    reportsService.filter({ is_demo: true }).then(r => {
       setReports(r);
       setLoading(false);
     });

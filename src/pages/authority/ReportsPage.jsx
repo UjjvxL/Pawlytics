@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { reportsService } from "@/api/services";
 import { CATEGORY_LABELS, SEVERITY_LABELS } from "@/lib/riskEngine";
 import { Search, FileText } from "lucide-react";
 
@@ -10,7 +10,7 @@ export default function ReportsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
-    base44.entities.Report.filter({ is_demo: true })
+    reportsService.filter({ is_demo: true })
       .then(r => {
         setReports(r.sort((a, b) => new Date(b.incident_timestamp) - new Date(a.incident_timestamp)));
         setLoading(false);

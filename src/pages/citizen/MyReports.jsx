@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { reportsService } from "@/api/services";
 import { CATEGORY_LABELS, SEVERITY_LABELS } from "@/lib/riskEngine";
 import { FileText, CheckCircle, Clock, XCircle, AlertTriangle } from "lucide-react";
 import DemoBanner from "@/components/DemoBanner";
@@ -16,7 +16,7 @@ export default function MyReports() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    base44.entities.Report.filter({ is_demo: true })
+    reportsService.filter({ is_demo: true })
       .then(r => {
         setReports(r.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)).slice(0, 20));
         setLoading(false);

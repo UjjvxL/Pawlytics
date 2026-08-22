@@ -5,7 +5,7 @@ import {
   MapPin, BarChart2, Zap, ClipboardList, Layers, Settings,
   Menu, X, LogOut, Shield
 } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { authService } from "@/api/services";
 import Logo from "@/components/Logo";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -95,7 +95,7 @@ export default function AuthorityLayout() {
             <ThemeToggle />
             <span className="font-medium">Authority User</span>
             <button
-              onClick={() => base44.auth.logout("/")}
+              onClick={() => authService.logout("/")}
               className="flex items-center gap-1 text-slate-400 hover:text-slate-600 transition-colors"
             >
               <LogOut className="w-4 h-4" />

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { MapContainer, TileLayer, Circle, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
-import { base44 } from "@/api/base44Client";
+import { reportsService, hotspotsService, contextPOIsService } from "@/api/services";
 import { RISK_LEVELS, CATEGORY_LABELS, SEVERITY_LABELS } from "@/lib/riskEngine";
 import RiskBadge from "@/components/RiskBadge";
 import { useTheme } from "@/lib/theme";
@@ -35,9 +35,9 @@ export default function AuthorityMap() {
 
   useEffect(() => {
     Promise.all([
-      base44.entities.Report.filter({ is_demo: true }),
-      base44.entities.Hotspot.filter({ is_demo: true, is_active: true }),
-      base44.entities.ContextPOI.filter({ is_demo: true }),
+      reportsService.filter({ is_demo: true }),
+      hotspotsService.filter({ is_demo: true, is_active: true }),
+      contextPOIsService.filter({ is_demo: true }),
     ]).then(([r, h, p]) => {
       setReports(r);
       setHotspots(h);

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { reportsService } from "@/api/services";
 import { SEVERITY_LABELS, CATEGORY_LABELS } from "@/lib/riskEngine";
 import {
   BarChart, Bar, AreaChart, Area, Cell,
@@ -11,7 +11,7 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    base44.entities.Report.filter({ is_demo: true }).then(r => {
+    reportsService.filter({ is_demo: true }).then(r => {
       setReports(r);
       setLoading(false);
     });

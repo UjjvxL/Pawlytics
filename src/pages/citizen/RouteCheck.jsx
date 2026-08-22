@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { hotspotsService } from "@/api/services";
 import { MapContainer, TileLayer, Polyline, Circle } from "react-leaflet";
 import { Navigation, ArrowRight, CheckCircle, Info } from "lucide-react";
 import { RISK_LEVELS } from "@/lib/riskEngine";
@@ -89,7 +89,7 @@ export default function RouteCheck() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    base44.entities.Hotspot.filter({ is_demo: true, is_active: true }).then(setHotspots);
+    hotspotsService.filter({ is_demo: true, is_active: true }).then(setHotspots);
   }, []);
 
   const handleCheck = () => {

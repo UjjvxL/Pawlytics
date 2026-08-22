@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { reportsService, hotspotsService, authorityActionsService, wardsService } from "@/api/services";
 import { Link } from "react-router-dom";
 import { FileText, CheckSquare, AlertTriangle, Flame, MapPin, Zap } from "lucide-react";
 import { AreaChart, Area, BarChart, Bar, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
@@ -15,10 +15,10 @@ export default function AuthorityOverview() {
 
   useEffect(() => {
     Promise.all([
-      base44.entities.Report.filter({ is_demo: true }),
-      base44.entities.Hotspot.filter({ is_demo: true }),
-      base44.entities.AuthorityAction.filter({ is_demo: true }),
-      base44.entities.Ward.filter({ is_demo: true }),
+      reportsService.filter({ is_demo: true }),
+      hotspotsService.filter({ is_demo: true }),
+      authorityActionsService.filter({ is_demo: true }),
+      wardsService.filter({ is_demo: true }),
     ]).then(([r, h, a, w]) => {
       setReports(r);
       setHotspots(h);

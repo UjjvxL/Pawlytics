@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { hotspotsService, authorityActionsService } from "@/api/services";
 import { RISK_LEVELS } from "@/lib/riskEngine";
 import RiskBadge, { ConfidenceBadge } from "@/components/RiskBadge";
 import { Flame, Clock, AlertTriangle, Plus } from "lucide-react";
@@ -14,8 +14,8 @@ export default function HotspotsPage() {
 
   useEffect(() => {
     Promise.all([
-      base44.entities.Hotspot.filter({ is_demo: true }),
-      base44.entities.AuthorityAction.filter({ is_demo: true }),
+      hotspotsService.filter({ is_demo: true }),
+      authorityActionsService.filter({ is_demo: true }),
     ]).then(([h, a]) => {
       setHotspots(h.sort((a, b) => (b.risk_score || 0) - (a.risk_score || 0)));
       setActions(a);
@@ -25,7 +25,7 @@ export default function HotspotsPage() {
 
   const handleAddAction = async (hotspot) => {
     if (!actionForm.action_type) return;
-    const created = await base44.entities.AuthorityAction.create({
+    const created = await authorityActionsService.create({
       hotspot_id: hotspot.id,
       authority_name: "Authority Demo User",
       action_type: actionForm.action_type,

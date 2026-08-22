@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, Outlet } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { authService } from "@/api/services/auth";
 import { ShieldAlert, Home } from "lucide-react";
 import DemoBanner from "@/components/DemoBanner";
 
@@ -10,8 +10,7 @@ export default function RoleRoute({ requiredRole = "admin" }) {
 
   useEffect(() => {
     let cancelled = false;
-    base44
-      .auth.me()
+      authService.me()
       .then((u) => {
         if (cancelled) return;
         setRole(u?.role || "user");

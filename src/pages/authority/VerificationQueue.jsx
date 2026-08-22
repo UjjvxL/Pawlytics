@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { reportsService, verificationsService } from "@/api/services";
 import { CATEGORY_LABELS, SEVERITY_LABELS } from "@/lib/riskEngine";
 import { CheckCircle, XCircle, Copy, ChevronDown, AlertTriangle } from "lucide-react";
 
@@ -20,7 +20,7 @@ export default function VerificationQueue() {
   const [processing, setProcessing] = useState(null);
 
   useEffect(() => {
-    base44.entities.Report.filter({ is_demo: true })
+    reportsService.filter({ is_demo: true })
       .then(r => {
         setReports(r.sort((a, b) => b.severity_level - a.severity_level));
         setLoading(false);
@@ -38,11 +38,11 @@ export default function VerificationQueue() {
     setProcessing(reportId);
     const statusMap = { verified: { status: "verified", verification_status: "verified" }, rejected: { status: "rejected", verification_status: "rejected" }, duplicate: { status: "duplicate", verification_status: "rejected" } };
     try {
-      await base44.entities.Report.update(reportId, {
+      await reportsService.update(reportId, {
         ...statusMap[decision],
         moderator_notes: notes[reportId] || "",
       });
-      await base44.entities.Verification.create({
+      await verificationsService.create({
         report_id: reportId,
         reviewer_name: "Authority Demo User",
         decision,

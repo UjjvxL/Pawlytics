@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { authorityActionsService } from "@/api/services";
 import { Plus, CheckCircle, Clock, XCircle, Zap } from "lucide-react";
 
 const ACTION_TYPE_LABELS = {
@@ -32,7 +32,7 @@ export default function ActionsPage() {
   const WARD_OPTIONS = ["Sector 62 Noida", "Sector 18 Atta Market", "Sector 37 Noida", "Sector 50 Noida", "Sector 93 Noida", "Sector 12 Noida"];
 
   useEffect(() => {
-    base44.entities.AuthorityAction.filter({ is_demo: true })
+    authorityActionsService.filter({ is_demo: true })
       .then(a => {
         setActions(a.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
         setLoading(false);
@@ -42,7 +42,7 @@ export default function ActionsPage() {
   const handleSubmit = async () => {
     if (!form.action_type || !form.location_label) return;
     setSubmitting(true);
-    const created = await base44.entities.AuthorityAction.create({
+    const created = await authorityActionsService.create({
       ...form,
       authority_name: "Authority Demo User",
       status: "pending",
@@ -55,7 +55,7 @@ export default function ActionsPage() {
   };
 
   const updateStatus = async (id, status) => {
-    await base44.entities.AuthorityAction.update(id, {
+    await authorityActionsService.update(id, {
       status,
       completed_at: status === "completed" ? new Date().toISOString() : null,
     });

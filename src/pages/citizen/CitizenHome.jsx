@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { reportsService, hotspotsService, alertsService, wardsService } from "@/api/services";
 import { MapPin, AlertTriangle, Navigation, Map, Plus, Bell, HelpCircle, Shield } from "lucide-react";
 import { RISK_LEVELS, CONFIDENCE_LEVELS, calculateRiskScore } from "@/lib/riskEngine";
 import RiskBadge, { ConfidenceBadge } from "@/components/RiskBadge";
@@ -26,10 +26,10 @@ export default function CitizenHome() {
 
   useEffect(() => {
     Promise.all([
-      base44.entities.Report.filter({ is_demo: true }),
-      base44.entities.Hotspot.filter({ is_demo: true, is_active: true }),
-      base44.entities.Alert.filter({ is_demo: true, is_active: true }),
-      base44.entities.Ward.filter({ is_demo: true }),
+      reportsService.filter({ is_demo: true }),
+      hotspotsService.filter({ is_demo: true, is_active: true }),
+      alertsService.filter({ is_demo: true, is_active: true }),
+      wardsService.filter({ is_demo: true }),
     ]).then(([r, h, a, w]) => {
       setReports(r);
       setHotspots(h.sort((a, b) => (b.risk_score || 0) - (a.risk_score || 0)));

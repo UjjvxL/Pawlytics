@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { reportsService, hotspotsService, authorityActionsService } from "@/api/services";
 import { RISK_LEVELS, SEVERITY_LABELS } from "@/lib/riskEngine";
 import RiskBadge from "@/components/RiskBadge";
 import { ClipboardList } from "lucide-react";
@@ -22,9 +22,9 @@ export default function ComplianceReport() {
 
   useEffect(() => {
     Promise.all([
-      base44.entities.Report.filter({ is_demo: true }),
-      base44.entities.Hotspot.filter({ is_demo: true }),
-      base44.entities.AuthorityAction.filter({ is_demo: true }),
+      reportsService.filter({ is_demo: true }),
+      hotspotsService.filter({ is_demo: true }),
+      authorityActionsService.filter({ is_demo: true }),
     ]).then(([r, h, a]) => {
       setReports(r);
       setHotspots(h);
