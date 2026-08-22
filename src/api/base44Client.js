@@ -1,14 +1,5 @@
-import { createClient } from '@base44/sdk';
-import { appParams } from '@/lib/app-params';
+// Base44 SDK has been removed. This file is kept as a stub for reference.
+// All data access now goes through src/api/services/ which uses Supabase.
+// All auth goes through src/api/services/auth.js which uses Supabase Auth.
 
-const { appId, token, functionsVersion, appBaseUrl } = appParams;
-
-//Create a client with authentication required
-export const base44 = createClient({
-  appId,
-  token,
-  functionsVersion,
-  serverUrl: '',
-  requiresAuth: false,
-  appBaseUrl
-});
+export const base44 = null;

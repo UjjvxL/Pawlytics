@@ -49,9 +49,12 @@ export const authService = {
     return data;
   },
 
-  async logout() {
+  async logout(redirectTo) {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
+    if (redirectTo) {
+      window.location.href = redirectTo;
+    }
   },
 
   async verifyOtp({ email, otpCode }) {
@@ -72,7 +75,16 @@ export const authService = {
     if (error) throw error;
   },
   
-  async resetPassword(email) {
+  async resetPassword(emailOrParams) {
+    // Supports both:
+    // 1. resetPassword("email@example.com") — ForgotPassword flow (send reset link)
+    // 2. resetPassword({ resetToken, newPassword }) — ResetPassword flow (set new password)
+    if (typeof emailOrParams === 'object' && emailOrParams.newPassword) {
+      const { error } = await supabase.auth.updateUser({ password: emailOrParams.newPassword });
+      if (error) throw error;
+      return;
+    }
+    const email = typeof emailOrParams === 'string' ? emailOrParams : emailOrParams.email;
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
