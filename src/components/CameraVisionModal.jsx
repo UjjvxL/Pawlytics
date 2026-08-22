@@ -299,8 +299,8 @@ export default function CameraVisionModal({ isOpen, onClose, onCaptureComplete }
 
                 <div className="bg-slate-800/80 p-3 rounded-xl">
                   <div className="text-xs text-slate-400">Pack / Group Detected</div>
-                  <div className={`text-lg font-bold mt-0.5 ${aiResult.groupDetected ? 'text-amber-400' : 'text-slate-400'}`}>
-                    {aiResult.groupDetected ? 'Yes (Group)' : aiResult.dogCount === 1 ? 'Single Dog' : 'None'}
+                  <div className={`text-lg font-bold mt-0.5 ${aiResult.groupDetected ? 'text-amber-400 font-bold' : 'text-slate-400'}`}>
+                    {aiResult.groupDetected ? `Yes (Pack of ${aiResult.dogCount})` : aiResult.dogCount === 1 ? 'Single Dog' : 'None'}
                   </div>
                 </div>
               </div>
@@ -315,7 +315,7 @@ export default function CameraVisionModal({ isOpen, onClose, onCaptureComplete }
               {aiResult.groupDetected && (
                 <div className="bg-amber-950/40 border border-amber-600/30 text-amber-300 text-xs p-3 rounded-xl flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 flex-shrink-0 text-amber-400" />
-                  Multiple dogs detected in frame. Automatically tagged for group presence risk weighting.
+                  Pack of {aiResult.dogCount} dogs detected in frame. Automatically tagged for group presence risk weighting.
                 </div>
               )}
             </div>
