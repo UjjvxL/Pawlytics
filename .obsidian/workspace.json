@@ -205,6 +205,8 @@
   },
   "active": "73abafaae2875dfe",
   "lastOpenFiles": [
+    "dist/assets/index-BozO_gQp.js",
+    "src/components/CameraVisionModal.jsx",
     "dist/index.html",
     "dist/assets/ort-wasm-simd-threaded.jsep-DC5y_g6C.wasm",
     "dist/assets/index-D3o0t5yT.css",
@@ -214,8 +216,6 @@
     "src/components/NationalConflictHeatmap.jsx",
     "dist/assets/index-ChoixC1O.js",
     "src/lib/spatialClustering.js",
-    "src/lib/visionEngine.js",
-    "src/lib/yoloDetector.js",
     "node_modules/protobufjs/ext/descriptor/README.md",
     "node_modules/protobufjs/ext/debug/README.md",
     "node_modules/protobufjs/README.md",

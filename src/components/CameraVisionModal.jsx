@@ -292,16 +292,25 @@ export default function CameraVisionModal({ isOpen, onClose, onCaptureComplete }
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="bg-slate-800/80 p-3 rounded-xl">
                   <div className="text-xs text-slate-400">Canines Counted</div>
-                  <div className="text-lg font-bold text-white mt-0.5">{aiResult.dogCount} dog{aiResult.dogCount > 1 ? 's' : ''}</div>
+                  <div className={`text-lg font-bold mt-0.5 ${aiResult.dogCount > 0 ? 'text-white' : 'text-slate-400'}`}>
+                    {aiResult.dogCount > 0 ? `${aiResult.dogCount} dog${aiResult.dogCount > 1 ? 's' : ''}` : '0 dogs (Clean Scene)'}
+                  </div>
                 </div>
 
                 <div className="bg-slate-800/80 p-3 rounded-xl">
                   <div className="text-xs text-slate-400">Pack / Group Detected</div>
-                  <div className={`text-lg font-bold mt-0.5 ${aiResult.groupDetected ? 'text-amber-400' : 'text-slate-300'}`}>
-                    {aiResult.groupDetected ? 'Yes (Group)' : 'Single'}
+                  <div className={`text-lg font-bold mt-0.5 ${aiResult.groupDetected ? 'text-amber-400' : 'text-slate-400'}`}>
+                    {aiResult.groupDetected ? 'Yes (Group)' : aiResult.dogCount === 1 ? 'Single Dog' : 'None'}
                   </div>
                 </div>
               </div>
+
+              {aiResult.dogCount === 0 && (
+                <div className="bg-slate-800 border border-slate-700 text-slate-300 text-xs p-3 rounded-xl flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 flex-shrink-0 text-emerald-400" />
+                  No dogs detected in frame. You can still attach this photo as general area evidence.
+                </div>
+              )}
 
               {aiResult.groupDetected && (
                 <div className="bg-amber-950/40 border border-amber-600/30 text-amber-300 text-xs p-3 rounded-xl flex items-center gap-2">
