@@ -67,10 +67,28 @@ export function calculateRiskScore(reports) {
     return (now - ts) < THIRTY_DAYS;
   });
   
-  const verifiedCount = recentReports.filter(r => r.verification_status === "verified" || r.status === "verified").length;
-  
-  // Base: verified report count (max 30 pts)
-  const reportScore = Math.min(30, verifiedCount * 3);
+  const verifiedCount = recentReports.filter(r => {
+    const isVerified = r.verification_status === "verified" || r.status === "verified";
+    const isNotRejected = r.cv_uncertainty !== "REJECTED";
+    return isVerified && isNotRejected;
+  }).length;
+
+  // Base: verified report count weighted by CV Uncertainty Tier
+  let reportScoreSum = 0;
+  recentReports.forEach((r) => {
+    const isVerified = r.verification_status === "verified" || r.status === "verified";
+    if (!isVerified) return;
+
+    // Uncertainty weighting: prevent unverified low-confidence CV from inflating risk
+    const cvWeight =
+      r.cv_uncertainty === "CONFIRMED" ? 1.0 :
+      r.cv_uncertainty === "PROBABLE"  ? 0.75 :
+      r.cv_uncertainty === "UNCERTAIN" ? 0.30 : 0.0;
+
+    reportScoreSum += 3 * cvWeight;
+  });
+
+  const reportScore = Math.min(30, reportScoreSum);
   weightedScore += reportScore;
   if (verifiedCount > 0) explanationFactors.push(`${verifiedCount} verified report${verifiedCount > 1 ? 's' : ''} in the last 30 days`);
   
