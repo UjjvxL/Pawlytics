@@ -38,6 +38,7 @@ import ActionsPage from '@/pages/authority/ActionsPage';
 import ComplianceReport from '@/pages/authority/ComplianceReport';
 import DataLayers from '@/pages/authority/DataLayers';
 import SettingsPage from '@/pages/authority/SettingsPage';
+import AbcCampaigns from '@/pages/authority/AbcCampaigns';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -97,6 +98,7 @@ const AuthenticatedApp = () => {
             <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="actions" element={<ActionsPage />} />
             <Route path="compliance" element={<ComplianceReport />} />
+            <Route path="abc-campaigns" element={<AbcCampaigns />} />
             <Route path="layers" element={<DataLayers />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>

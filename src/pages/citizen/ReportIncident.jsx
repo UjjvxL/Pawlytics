@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { reportsService } from "@/api/services";
 import { ChevronLeft, ChevronRight, MapPin, Camera, Check, Info, Sparkles, ShieldCheck } from "lucide-react";
 import CameraVisionModal from "@/components/CameraVisionModal";
+import VoiceReportInput from "@/components/VoiceReportInput";
+import { saveReportOffline } from "@/lib/offlineSync";
 
 const CATEGORIES = [
   { value: "sighting", label: "Dog Sighting", emoji: "👁️", desc: "Dogs present but no interaction" },
@@ -268,9 +270,25 @@ export default function ReportIncident() {
       <div className="flex-1 px-4 py-5">
         {/* Step 1: Category */}
         {step === 1 && (
-          <div className="animate-fade-in">
-            <h2 className="font-bold text-slate-800 text-xl mb-1 font-display">What happened?</h2>
-            <p className="text-slate-500 text-sm mb-4">Select the type of interaction you experienced.</p>
+          <div className="animate-fade-in space-y-4">
+            <div>
+              <h2 className="font-bold text-slate-800 text-xl mb-1 font-display">What happened?</h2>
+              <p className="text-slate-500 text-sm">Speak your report or select the type of interaction experienced.</p>
+            </div>
+
+            <VoiceReportInput
+              onStructuredVoiceResult={(parsed) => {
+                setForm((prev) => ({
+                  ...prev,
+                  category: parsed.category,
+                  severity_level: parsed.severityLevel,
+                  dog_count: parsed.dogCount,
+                  description: parsed.transcript,
+                  context_tags: parsed.context_tags || [],
+                }));
+              }}
+            />
+
             <div className="space-y-2">
               {CATEGORIES.map(cat => (
                 <button

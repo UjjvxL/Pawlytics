@@ -3,7 +3,7 @@ import { Outlet, NavLink, Link } from "react-router-dom";
 import {
   LayoutDashboard, Map, FileText, CheckSquare, Flame,
   MapPin, BarChart2, Zap, ClipboardList, Layers, Settings,
-  Menu, X, LogOut, Shield
+  Menu, X, LogOut, Shield, Scissors
 } from "lucide-react";
 import { authService } from "@/api/services";
 import Logo from "@/components/Logo";
@@ -19,6 +19,7 @@ const NAV_ITEMS = [
   { to: "/authority/analytics", icon: BarChart2, label: "Analytics" },
   { to: "/authority/actions", icon: Zap, label: "Actions" },
   { to: "/authority/compliance", icon: ClipboardList, label: "Compliance Reports" },
+  { to: "/authority/abc-campaigns", icon: Scissors, label: "ABC Sterilization" },
   { to: "/authority/layers", icon: Layers, label: "Data Layers" },
   { to: "/authority/settings", icon: Settings, label: "Settings" },
 ];
