@@ -126,11 +126,18 @@ export default function ComplianceReport() {
                 <div className="text-blue-200 text-sm mt-1">{config.municipality}</div>
                 <div className="text-blue-300 text-sm">{config.ward} · {PERIOD_LABELS[config.period]}</div>
               </div>
-              <div className="text-right">
-                <div className="text-blue-300 text-xs">Generated</div>
-                <div className="text-white text-sm font-mono">{new Date().toLocaleDateString("en-IN")}</div>
-                <div className="text-blue-300 text-xs mt-1">{new Date().toLocaleTimeString("en-IN")}</div>
-                <div className="demo-badge mt-2">DEMO / PILOT DATA</div>
+              <div className="text-right flex flex-col items-end gap-2">
+                <div>
+                  <div className="text-blue-300 text-xs">Generated</div>
+                  <div className="text-white text-sm font-mono">{new Date().toLocaleDateString("en-IN")}</div>
+                  <div className="text-blue-300 text-xs mt-1">{new Date().toLocaleTimeString("en-IN")}</div>
+                </div>
+                <button
+                  onClick={() => window.print()}
+                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
+                >
+                  📄 Print / Save Official PDF
+                </button>
               </div>
             </div>
           </div>

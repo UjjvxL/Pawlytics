@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { reportsService, hotspotsService, alertsService, wardsService } from "@/api/services";
-import { MapPin, AlertTriangle, Navigation, Map, Plus, Bell, HelpCircle, Shield } from "lucide-react";
+import { MapPin, AlertTriangle, Navigation, Map, Plus, Bell, HelpCircle, Shield, HeartPulse } from "lucide-react";
+import ArvEmergencyModal from "@/components/ArvEmergencyModal";
 import { RISK_LEVELS, CONFIDENCE_LEVELS, calculateRiskScore } from "@/lib/riskEngine";
 import RiskBadge, { ConfidenceBadge } from "@/components/RiskBadge";
 import DemoBanner from "@/components/DemoBanner";
@@ -23,6 +24,7 @@ export default function CitizenHome() {
   const [alerts, setAlerts] = useState([]);
   const [wards, setWards] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showArvModal, setShowArvModal] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -135,15 +137,18 @@ export default function CitizenHome() {
                 <div className="text-slate-400 text-xs">Conflict exposure</div>
               </div>
             </Link>
-            <Link to="/map" className="bg-white text-slate-800 rounded-2xl p-4 flex items-center gap-3 shadow-sm border border-slate-200 active:scale-95 transition-transform">
-              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
-                <Map className="w-5 h-5 text-slate-600" />
+            <button
+              onClick={() => setShowArvModal(true)}
+              className="bg-red-50 text-red-900 rounded-2xl p-4 flex items-center gap-3 shadow-sm border border-red-200 active:scale-95 transition-transform"
+            >
+              <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
+                <HeartPulse className="w-5 h-5 text-red-600" />
               </div>
               <div>
-                <div className="font-semibold text-sm">Live Map</div>
-                <div className="text-slate-400 text-xs">All risk zones</div>
+                <div className="font-semibold text-sm">ARV Centers</div>
+                <div className="text-red-600 text-xs">First-Aid & Clinics</div>
               </div>
-            </Link>
+            </button>
             <Link to="/map?view=hotspots" className="bg-white text-slate-800 rounded-2xl p-4 flex items-center gap-3 shadow-sm border border-slate-200 active:scale-95 transition-transform">
               <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
                 <AlertTriangle className="w-5 h-5 text-orange-500" />
@@ -236,6 +241,8 @@ export default function CitizenHome() {
           <br />Risk scores are decision-support indicators, not predictions.
         </div>
       </div>
+
+      <ArvEmergencyModal isOpen={showArvModal} onClose={() => setShowArvModal(false)} />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import {
   BarChart, Bar, AreaChart, Area, Cell,
   XAxis, YAxis, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis
 } from "recharts";
+import NationalConflictHeatmap from "@/components/NationalConflictHeatmap";
 
 export default function AnalyticsPage() {
   const [reports, setReports] = useState([]);
@@ -187,6 +188,9 @@ export default function AnalyticsPage() {
           </ResponsiveContainer>
         </div>
       </div>
+
+      {/* National Heatmap Section (SIH 2026 Reference Dataset) */}
+      <NationalConflictHeatmap />
     </div>
   );
 }
