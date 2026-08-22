@@ -8,35 +8,20 @@
         "type": "tabs",
         "children": [
           {
-            "id": "6fd757dda8bd57d2",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "wiki/concepts/rag-vs-persistent-wiki.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "rag-vs-persistent-wiki"
-            }
-          },
-          {
             "id": "16c56d14e83f591f",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "pawlyticsObsedian/PawlyticsObsedian/Welcome.md",
+                "file": "pawlyticsObsedian/PawlyticsObsedian/2026-08-23-pawlytics-architecture-overview.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Welcome"
+              "title": "2026-08-23-pawlytics-architecture-overview"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
@@ -205,17 +190,20 @@
   },
   "active": "73abafaae2875dfe",
   "lastOpenFiles": [
+    "dist/index.html",
+    "dist/assets/index-D3o0t5yT.css",
+    "dist/assets/index-hTn93qs7.js",
+    "dist/assets",
+    "raw.md",
+    "pawlyticsObsedian/PawlyticsObsedian/2026-08-23-pawlytics-architecture-overview.md",
+    "pawlyticsObsedian/PawlyticsObsedian/Welcome.md",
+    "src/lib/confidenceCalibration.js",
+    "src/lib/activeLearning.js",
+    "src/lib/geminiValidator.js",
     "dist/assets/index-CDBjBqm-.js",
     "node_modules/seedrandom/seedrandom.js",
     "node_modules/seedrandom/lib/tychei.min.js",
     "node_modules/seedrandom/lib/xor4096.min.js",
-    "node_modules/seedrandom/lib/alea.min.js",
-    "node_modules/seedrandom/lib/xorwow.min.js",
-    "node_modules/seedrandom/lib/xorwow.js",
-    "node_modules/seedrandom/lib/xorshift7.min.js",
-    "node_modules/seedrandom/lib/xorshift7.js",
-    "node_modules/seedrandom/lib/xor128.min.js",
-    "node_modules/seedrandom/lib/xor4096.js",
     "node_modules/protobufjs/ext/descriptor/README.md",
     "node_modules/protobufjs/ext/debug/README.md",
     "node_modules/protobufjs/README.md",
@@ -238,9 +226,6 @@
     "node_modules/string_decoder/README.md",
     "node_modules/cliui/README.md",
     "node_modules/cliui/CHANGELOG.md",
-    "node_modules/mime-db/README.md",
-    "node_modules/mime-db/HISTORY.md",
-    "node_modules/y18n/README.md",
-    "node_modules/y18n/CHANGELOG.md"
+    "node_modules/mime-db/README.md"
   ]
 }

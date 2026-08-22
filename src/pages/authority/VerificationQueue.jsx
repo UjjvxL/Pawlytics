@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { reportsService, verificationsService } from "@/api/services";
 import { CATEGORY_LABELS, SEVERITY_LABELS } from "@/lib/riskEngine";
-import { CheckCircle, XCircle, Copy, ChevronDown, AlertTriangle } from "lucide-react";
+import { CheckCircle, XCircle, Copy, ChevronDown, AlertTriangle, ShieldCheck } from "lucide-react";
+import { recordHumanCorrection } from "@/lib/activeLearning";
 
 const TRUST_LABELS = { 1.0: { label: "Established", color: "text-green-600" }, 0.7: { label: "New Reporter", color: "text-amber-500" }, 0.5: { label: "Flagged", color: "text-red-500" } };
 
@@ -49,6 +50,18 @@ export default function VerificationQueue() {
         notes: notes[reportId] || "",
         is_demo: true,
       });
+
+      // Log Active Learning Human Correction event
+      const targetReport = reports.find(r => r.id === reportId);
+      if (targetReport) {
+        recordHumanCorrection(
+          targetReport.id,
+          decision === "verified" ? "canine" : "non-canine",
+          targetReport.cv_dog_count || 1,
+          "authority-moderator-1"
+        );
+      }
+
       setReports(prev => prev.map(r => r.id === reportId ? { ...r, ...statusMap[decision] } : r));
       setExpanded(null);
     } catch (e) { console.error(e); }
