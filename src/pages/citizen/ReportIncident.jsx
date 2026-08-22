@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { reportsService } from "@/api/services";
-import { ChevronLeft, ChevronRight, MapPin, Camera, Check, Info } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin, Camera, Check, Info, Sparkles, ShieldCheck } from "lucide-react";
+import CameraVisionModal from "@/components/CameraVisionModal";
 
 const CATEGORIES = [
   { value: "sighting", label: "Dog Sighting", emoji: "👁️", desc: "Dogs present but no interaction" },
@@ -58,6 +59,7 @@ export default function ReportIncident() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(null);
   const [cvResult, setCvResult] = useState(null);
+  const [showCameraModal, setShowCameraModal] = useState(false);
   const [form, setForm] = useState({
     category: "",
     severity_level: null,
@@ -71,6 +73,27 @@ export default function ReportIncident() {
     dog_count: 1,
     context_tags: [],
   });
+
+  const handleAiCaptureComplete = (aiData) => {
+    setCvResult({
+      dog_count: aiData.cv_dog_count,
+      confidence: Math.round(aiData.cv_confidence * 100),
+      group_detected: aiData.cv_group_detected,
+      status: "processed",
+    });
+
+    setForm((f) => {
+      const updatedTags = new Set(f.context_tags);
+      if (aiData.cv_group_detected) updatedTags.add("group_presence");
+      return {
+        ...f,
+        evidence_url: aiData.evidence_url,
+        dog_count: aiData.cv_dog_count,
+        context_tags: Array.from(updatedTags),
+        severity_level: f.severity_level || aiData.suggested_severity,
+      };
+    });
+  };
 
   const TOTAL_STEPS = 7;
 
@@ -346,30 +369,74 @@ export default function ReportIncident() {
 
         {/* Step 5: Evidence */}
         {step === 5 && (
-          <div className="animate-fade-in">
-            <h2 className="font-bold text-slate-800 text-xl mb-1 font-display">Add evidence</h2>
-            <p className="text-slate-500 text-sm mb-2">Optional. Photo or video helps with verification.</p>
-            <div className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-2 mb-4 text-xs text-blue-700 flex items-start gap-2">
-              <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
-              EXIF location data will be stripped. Images are used for CV dog detection only — not to identify individuals or animals.
+          <div className="animate-fade-in space-y-4">
+            <div>
+              <h2 className="font-bold text-slate-800 text-xl mb-1 font-display">Add evidence & AI Scan</h2>
+              <p className="text-slate-500 text-sm mb-2">Use live camera or upload photo/video for real-time AI canine detection.</p>
+              <div className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-2 text-xs text-blue-700 flex items-start gap-2">
+                <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                EXIF location data is stripped. AI Vision detects canine counts & pack formations automatically.
+              </div>
             </div>
-            <div className="bg-white rounded-2xl border-2 border-dashed border-slate-300 p-8 text-center mb-4">
-              <Camera className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-              <div className="text-slate-600 font-medium mb-1">Tap to add photo / video</div>
-              <div className="text-xs text-slate-400">JPG, PNG, MP4 — max 10MB</div>
-              <button
-                onClick={() => setForm(f => ({ ...f, evidence_url: "demo_upload_simulated" }))}
-                className="mt-3 px-4 py-2 bg-slate-100 rounded-lg text-sm text-slate-600 font-medium"
-              >
-                Simulate Photo Upload
-              </button>
-            </div>
-            {form.evidence_url && (
-              <div className="bg-green-50 border border-green-200 rounded-xl px-3 py-2 text-sm text-green-700 flex items-center gap-2">
-                <Check className="w-4 h-4" /> Photo added — CV analysis will process on submission
+
+            {/* Camera / Upload Action Card */}
+            {!form.evidence_url ? (
+              <div className="bg-white rounded-2xl border-2 border-dashed border-slate-300 p-6 text-center space-y-3">
+                <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-900 flex items-center justify-center mx-auto">
+                  <Camera className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="text-slate-800 font-semibold text-sm">Capture Live Photo or Upload File</div>
+                  <div className="text-xs text-slate-400">Live Camera, Video, or Photo Gallery</div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowCameraModal(true)}
+                    className="flex-1 bg-blue-900 text-white py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 shadow-sm hover:bg-blue-800 transition-colors"
+                  >
+                    <Camera className="w-4 h-4" /> Open Camera / Scan
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowCameraModal(true)}
+                    className="flex-1 bg-slate-100 text-slate-700 py-3 rounded-xl font-medium text-sm hover:bg-slate-200 transition-colors"
+                  >
+                    Upload Photo / Video
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Scanned Evidence</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowCameraModal(true)}
+                    className="text-xs text-blue-700 font-medium hover:underline flex items-center gap-1"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" /> Rescan / Change
+                  </button>
+                </div>
+
+                <div className="relative rounded-xl overflow-hidden bg-slate-900 border border-slate-200">
+                  <img src={form.evidence_url} alt="Evidence" className="w-full h-44 object-cover" />
+                  <div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-md text-white text-xs font-medium px-2.5 py-1 rounded-md flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> AI Verified: {cvResult?.dog_count || form.dog_count} Canine(s)
+                  </div>
+                </div>
+
+                {cvResult && (
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-800 flex items-center justify-between">
+                    <span>AI Detection Confidence: <strong>{cvResult.confidence}%</strong></span>
+                    {cvResult.group_detected && <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold">Pack Group</span>}
+                  </div>
+                )}
               </div>
             )}
-            <div className="mt-4">
+
+            <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Description (optional)</label>
               <textarea
                 value={form.description}
@@ -379,6 +446,13 @@ export default function ReportIncident() {
                 className="w-full border border-slate-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-900/30 focus:border-blue-900 resize-none"
               />
             </div>
+
+            {/* Camera Vision Modal Component */}
+            <CameraVisionModal
+              isOpen={showCameraModal}
+              onClose={() => setShowCameraModal(false)}
+              onCaptureComplete={handleAiCaptureComplete}
+            />
           </div>
         )}
 
