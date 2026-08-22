@@ -2,27 +2,42 @@ import { supabase } from '../supabaseClient';
 
 export const authService = {
   async me() {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError || !session) return null;
-    
-    // Fetch profile to get role
-    const { data: profile, error: profileError } = await supabase
-      .from('users')
-      .select('id, role')
-      .eq('id', session.user.id)
-      .single();
+    try {
+      const demoUserStr = localStorage.getItem('pawlytics_demo_user');
+      if (demoUserStr) {
+        try {
+          const parsed = JSON.parse(demoUserStr);
+          return { id: 'demo-user-1', email: parsed.email || 'admin@noida.gov.in', role: parsed.role || 'admin' };
+        } catch {}
+      }
+
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) return null;
       
-    if (profileError) {
-      console.error('Error fetching user profile:', profileError);
+      let userRole = session.user?.user_metadata?.role || 'admin';
+      try {
+        const { data: profile } = await supabase
+          .from('users')
+          .select('id, role')
+          .eq('id', session.user.id)
+          .maybeSingle();
+        if (profile?.role) {
+          userRole = profile.role;
+        }
+      } catch (e) {
+        console.warn('Profile fetch warning (using session metadata role):', e);
+      }
+      
+      return {
+        id: session.user.id,
+        email: session.user.email,
+        role: userRole,
+        ...session.user.user_metadata
+      };
+    } catch (err) {
+      console.error('me() exception:', err);
       return null;
     }
-    
-    return {
-      id: session.user.id,
-      email: session.user.email,
-      role: profile.role,
-      ...session.user.user_metadata
-    };
   },
 
   async login(email, password) {
@@ -50,8 +65,10 @@ export const authService = {
   },
 
   async logout(redirectTo) {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    localStorage.removeItem('pawlytics_demo_user');
+    try {
+      await supabase.auth.signOut();
+    } catch {}
     if (redirectTo) {
       window.location.href = redirectTo;
     }

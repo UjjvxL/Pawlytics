@@ -37,6 +37,7 @@ import AnalyticsPage from '@/pages/authority/AnalyticsPage';
 import ActionsPage from '@/pages/authority/ActionsPage';
 import ComplianceReport from '@/pages/authority/ComplianceReport';
 import DataLayers from '@/pages/authority/DataLayers';
+import SettingsPage from '@/pages/authority/SettingsPage';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -97,7 +98,7 @@ const AuthenticatedApp = () => {
             <Route path="actions" element={<ActionsPage />} />
             <Route path="compliance" element={<ComplianceReport />} />
             <Route path="layers" element={<DataLayers />} />
-            <Route path="settings" element={<SettingsPlaceholder />} />
+            <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Route>
       </Route>
@@ -106,17 +107,6 @@ const AuthenticatedApp = () => {
     </Routes>
   );
 };
-
-function SettingsPlaceholder() {
-  return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-slate-800 font-display">Settings</h1>
-      <div className="bg-white rounded-xl border border-slate-200 p-6 text-center text-slate-500">
-        Settings and role management coming in next release.
-      </div>
-    </div>
-  );
-}
 
 function App() {
   return (

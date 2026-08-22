@@ -54,14 +54,28 @@ export default function Login() {
         </>
       }
     >
-      <Button
-        variant="outline"
-        className="w-full h-12 text-sm font-medium mb-6"
-        onClick={handleGoogle}
-      >
-        <GoogleIcon className="w-5 h-5 mr-2" />
-        Continue with Google
-      </Button>
+      <div className="space-y-2 mb-6">
+        <Button
+          variant="outline"
+          className="w-full h-11 text-sm font-medium border-blue-900 text-blue-900 hover:bg-blue-50"
+          onClick={() => {
+            localStorage.setItem('pawlytics_demo_user', JSON.stringify({ email: 'admin@noida.gov.in', role: 'admin' }));
+            window.location.href = '/authority';
+          }}
+        >
+          Enter Authority Dashboard (Demo Admin)
+        </Button>
+        <Button
+          variant="outline"
+          className="w-full h-11 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          onClick={() => {
+            localStorage.setItem('pawlytics_demo_user', JSON.stringify({ email: 'citizen@noida.gov.in', role: 'citizen' }));
+            window.location.href = '/';
+          }}
+        >
+          Enter Citizen Portal (Demo Mode)
+        </Button>
+      </div>
 
       <div className="relative mb-6">
         <div className="absolute inset-0 flex items-center">

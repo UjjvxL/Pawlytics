@@ -1,0 +1,245 @@
+{
+  "main": {
+    "id": "36ab847f786a5b2d",
+    "type": "split",
+    "children": [
+      {
+        "id": "9f0cd7586fbba2d7",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "6fd757dda8bd57d2",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "wiki/concepts/rag-vs-persistent-wiki.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "rag-vs-persistent-wiki"
+            }
+          },
+          {
+            "id": "16c56d14e83f591f",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "pawlyticsObsedian/PawlyticsObsedian/Welcome.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Welcome"
+            }
+          }
+        ],
+        "currentTab": 1
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "5a196fab2f38358a",
+    "type": "split",
+    "children": [
+      {
+        "id": "01a14a04fd7aa128",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "73abafaae2875dfe",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "5bb19adf2c13a4a9",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "79a0400aa53c6a89",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "c6db279e3391d1a8",
+    "type": "split",
+    "children": [
+      {
+        "id": "b6eb85083b14015f",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "539d22463bbaf2c1",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "README.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks"
+            }
+          },
+          {
+            "id": "db468e1352c8999a",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "README.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links"
+            }
+          },
+          {
+            "id": "8fe79a4e074d3d31",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "b7ce8cc6c39e53a8",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "41247771b4c322fc",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "README.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "73abafaae2875dfe",
+  "lastOpenFiles": [
+    "dist/assets/index-qrrtMNKs.js",
+    "pawlyticsObsedian/PawlyticsObsedian/sources/karpathy-llm-wiki-gist.md",
+    "pawlyticsObsedian/PawlyticsObsedian/queries/llm-wiki-vs-rag-developer-guide.md",
+    "pawlyticsObsedian/PawlyticsObsedian/queries",
+    "pawlyticsObsedian/PawlyticsObsedian/entities/pawlytics-platform.md",
+    "pawlyticsObsedian/PawlyticsObsedian/entities/andrej-karpathy.md",
+    "pawlyticsObsedian/PawlyticsObsedian/entities",
+    "pawlyticsObsedian/PawlyticsObsedian/concepts/rag-vs-persistent-wiki.md",
+    "pawlyticsObsedian/PawlyticsObsedian/concepts/pawlytics-authority-portal.md",
+    "pawlyticsObsedian/PawlyticsObsedian/concepts/llm-wiki-pattern.md",
+    "pawlyticsObsedian/PawlyticsObsedian/concepts",
+    "pawlyticsObsedian/PawlyticsObsedian/2026-08-23-pawlytics-architecture-overview.md",
+    "pawlyticsObsedian/PawlyticsObsedian/2026-08-23-karpathy-llm-wiki-gist.md",
+    "dist/assets/index-BXpYvnrV.js",
+    "dist/assets/index-D-QcS54l.css",
+    "supabase/full_setup_migration.sql",
+    "scratch/test_supabase.js",
+    "pawlyticsObsedian/PawlyticsObsedian/wiki/entities/pawlytics-platform.md",
+    "pawlyticsObsedian/PawlyticsObsedian/wiki/concepts/pawlytics-authority-portal.md",
+    "pawlyticsObsedian/PawlyticsObsedian/sources/2026-08-23-pawlytics-architecture-overview.md",
+    "dist/index.html",
+    "dist/assets/index-DTqwdF3n.js",
+    "dist/assets/index-c6PcC1W1.css",
+    "wiki/entities/pawlytics-platform.md",
+    "wiki/concepts/pawlytics-authority-portal.md",
+    "sources/2026-08-23-pawlytics-architecture-overview.md",
+    "pawlyticsObsedian/wiki/sources/karpathy-llm-wiki-gist.md",
+    "pawlyticsObsedian/wiki/entities/andrej-karpathy.md",
+    "pawlyticsObsedian/wiki/queries/llm-wiki-vs-rag-developer-guide.md",
+    "pawlyticsObsedian/wiki/concepts/rag-vs-persistent-wiki.md",
+    "pawlyticsObsedian/wiki/concepts/llm-wiki-pattern.md",
+    "pawlyticsObsedian/PawlyticsObsedian/wiki/sources/karpathy-llm-wiki-gist.md",
+    "pawlyticsObsedian/PawlyticsObsedian/wiki/queries/llm-wiki-vs-rag-developer-guide.md",
+    "pawlyticsObsedian/PawlyticsObsedian/wiki/concepts/rag-vs-persistent-wiki.md",
+    "pawlyticsObsedian/PawlyticsObsedian/wiki/entities/andrej-karpathy.md",
+    "pawlyticsObsedian/PawlyticsObsedian/wiki/concepts/llm-wiki-pattern.md"
+  ]
+}

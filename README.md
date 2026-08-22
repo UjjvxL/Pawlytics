@@ -1,77 +1,84 @@
-# Base44 Project
+# Pawlytics — Stray Animal Analytics & Conflict Intelligence Platform
 
-Use this repository to run and edit the app locally, then publish changes back through Base44.
+Pawlytics is a stray animal analytics, incident reporting, and conflict intelligence platform. It provides citizens with a real-time risk map, safe route navigation, and incident reporting tools, while empowering municipal authorities with a control dashboard, incident verification queue, sector risk heatmaps, escalation rules, and official GIS data export capabilities.
 
-Any change pushed to the repo will also be reflected in the Base44 Builder.
+---
 
-## Prerequisites
+## 🚀 Key Features
 
-1. Clone the repository using the project's Git URL.
-2. Navigate to the project directory.
-3. Install dependencies: `npm install`.
-4. Install the Base44 CLI: `npm install -g base44@latest`.
+### Citizen Mobile PWA (`/`)
+- **Know Before You Go**: Sector-by-sector conflict risk status and verified report counts.
+- **Incident Reporting Wizard**: Submit dog sightings, approaches, chases, aggressive interactions, or bites with location & category tags.
+- **Interactive Live Risk Map**: Leaflet spatial map centered on active zones with hotspot radius overlays and verified incident pins.
+- **Safe Route Check**: Path conflict exposure evaluation.
+- **Rabies & Safety Guidance**: Behavioral safety reminders and emergency guidance.
 
-See the [Base44 CLI docs](https://docs.base44.com/developers/references/cli/get-started/overview) if you want to run Base44 commands directly.
+### Municipal Authority Control Room (`/authority`)
+- **Dashboard Overview**: Incident metrics, 30-day severity breakdown, verified bite tracking, and active hotspot summaries.
+- **Verification Queue**: Triage interface for field officers to review, approve, or reject incoming reports.
+- **Sector & Ward Analytics**: Dynamic risk calculation per ward using time decay, severity weighting, and group presence indicators.
+- **Hotspots & Actions**: Cluster monitoring and animal birth control (ABC) campaign tracking.
+- **Authority Settings (`/authority/settings`)**: Interactive 5-tab control room for municipal profiles, 24h escalation thresholds, citizen broadcast radii, team staff roles, and GeoJSON/CSV/PDF exports.
 
-## Run Locally
+---
 
-Run the full local development environment from the project root:
+## 🛠️ Technology Stack
 
-```bash
-base44 dev
-```
+- **Frontend**: React 18, Vite 6, Tailwind CSS 3.4
+- **State & Router**: React Router DOM v6, TanStack React Query v5
+- **UI Components**: Radix UI Primitives, Lucide React Icons, Framer Motion
+- **Spatial / Maps**: Leaflet, React Leaflet, OpenStreetMap
+- **Database & Auth**: Supabase PostgreSQL, Supabase Auth, Row Level Security (RLS)
 
-`base44 dev` starts the local Base44 development backend and, when this app is configured for it, also starts the frontend dev server for you. Use the frontend URL printed by the command.
+---
 
-For example, when the Base44 project config includes a `serveCommand`, `base44 dev` can launch the frontend too:
+## 📋 Local Setup & Development
 
-```json5
-{
-  "site": {
-    "serveCommand": "npm run dev"
-  }
-}
-```
+### Prerequisites
+- Node.js (v18 or higher)
+- npm
 
-In a Base44 project this lives in `base44/config.jsonc`.
+### Installation & Execution
 
-## Run Only The Frontend
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/UjjvxL/Pawlytics.git
+   cd Pawlytics
+   ```
 
-If you only want to work on the frontend against the hosted Base44 backend, run:
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
 
-```bash
-npm run dev
-```
+3. **Configure Environment Variables**:
+   Create or update `.env.local` in the project root:
+   ```env
+   VITE_SUPABASE_URL=https://your-supabase-project.supabase.co
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
 
-Open the local URL printed by Vite.
+4. **Start Development Server**:
+   ```bash
+   npm run dev
+   ```
+   Open `http://localhost:5173` in your browser.
 
-## Use The Hosted Backend
+5. **Build for Production**:
+   ```bash
+   npm run build
+   ```
 
-For frontend-only development, create or update `.env.local` in the project root:
+---
 
-```bash
-VITE_BASE44_APP_ID=your_app_id
-VITE_BASE44_APP_BASE_URL=https://your-app.base44.app
-```
+## 🗄️ Database Setup (Supabase)
 
-`VITE_BASE44_APP_ID` identifies the Base44 app.
+1. Open your Supabase Dashboard SQL Editor.
+2. Run the master SQL script located at `supabase/full_setup_migration.sql`.
+3. This creates all 8 core tables (`reports`, `hotspots`, `wards`, `authority_actions`, `context_pois`, `verifications`, `alerts`, `users`), RLS security policies, user creation triggers, and demo seed data.
 
-`VITE_BASE44_APP_BASE_URL` tells the Base44 Vite plugin where to send local `/api` requests. Point it at your deployed Base44 app URL when you want the local frontend to use the hosted backend.
+---
 
-When you use `base44 dev`, the command injects the local Base44 values for you, so `.env.local` is mainly needed for frontend-only workflows.
+## 📄 License & Ownership
 
-## Publish Your Changes
-
-After pushing your changes to git, open the Base44 dashboard and publish the app:
-
-```bash
-base44 dashboard open
-```
-
-## Docs & Support
-
-Documentation: [https://docs.base44.com/Integrations/Using-GitHub](https://docs.base44.com/Integrations/Using-GitHub)
-
-Base44 CLI command reference: [https://docs.base44.com/developers/references/cli/commands/introduction](https://docs.base44.com/developers/references/cli/commands/introduction)
-
-Support: [https://app.base44.com/support](https://app.base44.com/support)
+Owned and maintained by the Pawlytics engineering team. All rights reserved.

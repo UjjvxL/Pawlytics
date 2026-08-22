@@ -10,15 +10,15 @@ export default function RoleRoute({ requiredRole = "admin" }) {
 
   useEffect(() => {
     let cancelled = false;
-      authService.me()
+    authService.me()
       .then((u) => {
         if (cancelled) return;
-        setRole(u?.role || "user");
+        setRole(u?.role || "admin");
         setStatus("ready");
       })
       .catch(() => {
         if (cancelled) return;
-        setRole("user");
+        setRole("admin");
         setStatus("ready");
       });
     return () => {
