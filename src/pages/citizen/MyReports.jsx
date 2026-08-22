@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { CATEGORY_LABELS, SEVERITY_LABELS, RISK_LEVELS } from "@/lib/riskEngine";
+import { CATEGORY_LABELS, SEVERITY_LABELS } from "@/lib/riskEngine";
 import { FileText, CheckCircle, Clock, XCircle, AlertTriangle } from "lucide-react";
 import DemoBanner from "@/components/DemoBanner";
 

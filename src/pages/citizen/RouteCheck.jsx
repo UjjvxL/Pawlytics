@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { MapContainer, TileLayer, Polyline, CircleMarker, Circle } from "react-leaflet";
-import { Navigation, ArrowRight, AlertTriangle, CheckCircle, Info, MapPin } from "lucide-react";
-import { RISK_LEVELS, getDistanceKm } from "@/lib/riskEngine";
+import { MapContainer, TileLayer, Polyline, Circle } from "react-leaflet";
+import { Navigation, ArrowRight, CheckCircle, Info } from "lucide-react";
+import { RISK_LEVELS } from "@/lib/riskEngine";
 import RiskBadge from "@/components/RiskBadge";
 import "leaflet/dist/leaflet.css";
 

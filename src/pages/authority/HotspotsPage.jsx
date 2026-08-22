@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { RISK_LEVELS } from "@/lib/riskEngine";
 import RiskBadge, { ConfidenceBadge } from "@/components/RiskBadge";
-import { Flame, Clock, Users, AlertTriangle, Plus, CheckCircle } from "lucide-react";
+import { Flame, Clock, AlertTriangle, Plus } from "lucide-react";
 
 export default function HotspotsPage() {
   const [hotspots, setHotspots] = useState([]);

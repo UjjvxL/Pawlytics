@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { MapPin, AlertTriangle, Navigation, Map, Plus, ChevronRight, Bell, HelpCircle, Shield, TrendingUp } from "lucide-react";
+import { MapPin, AlertTriangle, Navigation, Map, Plus, Bell, HelpCircle, Shield } from "lucide-react";
 import { RISK_LEVELS, CONFIDENCE_LEVELS, calculateRiskScore } from "@/lib/riskEngine";
 import RiskBadge, { ConfidenceBadge } from "@/components/RiskBadge";
 import DemoBanner from "@/components/DemoBanner";

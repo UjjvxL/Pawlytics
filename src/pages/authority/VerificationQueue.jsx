@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { CATEGORY_LABELS, SEVERITY_LABELS, CONFIDENCE_LEVELS } from "@/lib/riskEngine";
-import { CheckCircle, XCircle, Copy, MessageSquare, ChevronDown, Filter, AlertTriangle, Eye } from "lucide-react";
+import { CATEGORY_LABELS, SEVERITY_LABELS } from "@/lib/riskEngine";
+import { CheckCircle, XCircle, Copy, ChevronDown, AlertTriangle } from "lucide-react";
 
 const TRUST_LABELS = { 1.0: { label: "Established", color: "text-green-600" }, 0.7: { label: "New Reporter", color: "text-amber-500" }, 0.5: { label: "Flagged", color: "text-red-500" } };
 

@@ -1,5 +1,5 @@
 import { Outlet, NavLink } from "react-router-dom";
-import { Home, Map, Plus, Navigation, FileText, Bell, Shield } from "lucide-react";
+import { Home, Map, Plus, Navigation, FileText } from "lucide-react";
 
 const NAV_ITEMS = [
   { to: "/", icon: Home, label: "Home" },

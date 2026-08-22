@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { RISK_LEVELS, calculateRiskScore, CONFIDENCE_LEVELS } from "@/lib/riskEngine";
+import { RISK_LEVELS, calculateRiskScore } from "@/lib/riskEngine";
 import RiskBadge, { ConfidenceBadge } from "@/components/RiskBadge";
-import { MapPin, TrendingUp } from "lucide-react";
+import { MapPin } from "lucide-react";
 
 const WARD_LIST = [
   "Sector 62 Noida",

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { SEVERITY_LABELS, CATEGORY_LABELS, RISK_LEVELS } from "@/lib/riskEngine";
+import { SEVERITY_LABELS, CATEGORY_LABELS } from "@/lib/riskEngine";
 import {
-  BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell,
-  XAxis, YAxis, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, Legend
+  BarChart, Bar, AreaChart, Area, Cell,
+  XAxis, YAxis, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis
 } from "recharts";
 
 export default function AnalyticsPage() {

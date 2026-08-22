@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { RISK_LEVELS, SEVERITY_LABELS, CATEGORY_LABELS, calculateRiskScore } from "@/lib/riskEngine";
+import { RISK_LEVELS, SEVERITY_LABELS } from "@/lib/riskEngine";
 import RiskBadge from "@/components/RiskBadge";
-import { ClipboardList, Download, AlertTriangle, CheckCircle, Clock, TrendingUp, BarChart2 } from "lucide-react";
+import { ClipboardList } from "lucide-react";
 
 export default function ComplianceReport() {
   const [reports, setReports] = useState([]);

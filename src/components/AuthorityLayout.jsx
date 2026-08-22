@@ -3,7 +3,7 @@ import { Outlet, NavLink, Link } from "react-router-dom";
 import {
   LayoutDashboard, Map, FileText, CheckSquare, Flame,
   MapPin, BarChart2, Zap, ClipboardList, Layers, Settings,
-  Menu, X, ChevronRight, LogOut, Shield
+  Menu, X, LogOut, Shield
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import Logo from "@/components/Logo";

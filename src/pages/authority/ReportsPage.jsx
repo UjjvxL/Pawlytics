@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { CATEGORY_LABELS, SEVERITY_LABELS } from "@/lib/riskEngine";
-import { Search, Filter, FileText } from "lucide-react";
+import { Search, FileText } from "lucide-react";
 
 export default function ReportsPage() {
   const [reports, setReports] = useState([]);

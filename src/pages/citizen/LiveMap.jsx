@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from "react";
-import { MapContainer, TileLayer, CircleMarker, Circle, Popup, Marker, useMap } from "react-leaflet";
+import { useState, useEffect } from "react";
+import { MapContainer, TileLayer, Circle, Popup, Marker } from "react-leaflet";
 import L from "leaflet";
 import { base44 } from "@/api/base44Client";
 import { RISK_LEVELS, CATEGORY_LABELS, SEVERITY_LABELS } from "@/lib/riskEngine";
 import RiskBadge, { ConfidenceBadge } from "@/components/RiskBadge";
-import { Filter, X, Layers, AlertTriangle, MapPin, Info } from "lucide-react";
+import { Filter, X, AlertTriangle } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import "leaflet/dist/leaflet.css";
 

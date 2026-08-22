@@ -1,4 +1,4 @@
-import { Shield, AlertTriangle, Info, Heart, Phone, MapPin } from "lucide-react";
+import { Shield, AlertTriangle, Info, Heart, MapPin } from "lucide-react";
 
 const SECTIONS = [
   {

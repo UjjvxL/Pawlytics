@@ -1,4 +1,4 @@
-import { Layers, CheckCircle, Clock, AlertTriangle, ExternalLink } from "lucide-react";
+import { CheckCircle, Clock, AlertTriangle } from "lucide-react";
 
 const LAYERS = [
   {

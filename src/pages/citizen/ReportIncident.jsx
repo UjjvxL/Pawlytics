@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { ChevronLeft, ChevronRight, MapPin, Camera, Check, AlertTriangle, Info, Upload } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin, Camera, Check, Info } from "lucide-react";
 
 const CATEGORIES = [
   { value: "sighting", label: "Dog Sighting", emoji: "👁️", desc: "Dogs present but no interaction" },
