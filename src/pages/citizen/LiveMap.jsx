@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { MapContainer, TileLayer, Circle, Popup, Marker, useMap } from "react-leaflet";
 import L from "leaflet";
 import { reportsService, hotspotsService, contextPOIsService } from "@/api/services";
 import { RISK_LEVELS, CATEGORY_LABELS, SEVERITY_LABELS } from "@/lib/riskEngine";
 import RiskBadge, { ConfidenceBadge } from "@/components/RiskBadge";
-import { Filter, X, AlertTriangle, Phone, ShieldAlert, MapPin, Clock, Navigation, Sparkles, LocateFixed, ChevronDown } from "lucide-react";
+import { Filter, X, AlertTriangle, Phone, ShieldAlert, MapPin, Clock, Navigation, Sparkles, LocateFixed, ChevronDown, Home } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useGpsLocation } from "@/lib/gps";
 import { useLocationState } from "@/lib/locationContext";
@@ -148,7 +149,7 @@ export default function LiveMap() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[100dvh] bg-slate-950">
+      <div className="flex items-center justify-center h-full min-h-[400px] bg-slate-950">
         <div className="text-center text-white">
           <div className="w-10 h-10 border-4 border-slate-700 border-t-emerald-500 rounded-full animate-spin mx-auto mb-3" />
           <div className="text-sm text-slate-400 font-medium">Loading Greater Noida Conflict Intelligence Layer...</div>
@@ -158,7 +159,7 @@ export default function LiveMap() {
   }
 
   return (
-    <div className="relative h-[100dvh] w-full overflow-hidden bg-slate-950">
+    <div className="relative h-full w-full overflow-hidden bg-slate-950">
       {/* Map */}
       <MapContainer
         center={userLocation || coords || DEMO_CENTER}
@@ -258,7 +259,7 @@ export default function LiveMap() {
       </MapContainer>
 
       {/* Top header overlay with Active Sighted Dogs Telemetry */}
-      <div className="absolute top-0 left-0 right-0 z-[1000] bg-gradient-to-b from-slate-950 via-slate-950/80 to-transparent px-4 pt-10 pb-6 pointer-events-none">
+      <div className="absolute top-0 left-0 right-0 z-[500] bg-gradient-to-b from-slate-950 via-slate-950/80 to-transparent px-4 pt-10 pb-6 pointer-events-none">
         <div className="flex items-center justify-between pointer-events-auto max-w-lg mx-auto">
           <div>
             <button
@@ -278,18 +279,28 @@ export default function LiveMap() {
               <span>{hotspots.length} hotspots</span>
             </p>
           </div>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 bg-slate-900/90 border border-slate-800 text-white px-3.5 py-2 rounded-xl text-xs font-semibold shadow-xl backdrop-blur-md active:scale-95 transition-all"
-          >
-            <Filter className="w-4 h-4 text-emerald-400" />
-            Filters
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/"
+              className="flex items-center gap-1.5 bg-slate-900/90 border border-slate-800 text-white px-3 py-2 rounded-xl text-xs font-semibold shadow-xl backdrop-blur-md hover:bg-slate-800 active:scale-95 transition-all"
+              title="Return to Home"
+            >
+              <Home className="w-4 h-4 text-emerald-400" />
+              <span className="hidden sm:inline">Home</span>
+            </Link>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 bg-slate-900/90 border border-slate-800 text-white px-3.5 py-2 rounded-xl text-xs font-semibold shadow-xl backdrop-blur-md active:scale-95 transition-all"
+            >
+              <Filter className="w-4 h-4 text-emerald-400" />
+              Filters
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Layer legend */}
-      <div className="absolute bottom-24 left-4 z-[1000] bg-slate-900/95 border border-slate-800 backdrop-blur-md rounded-2xl p-3.5 shadow-2xl">
+      <div className="absolute bottom-4 left-4 z-[500] bg-slate-900/95 border border-slate-800 backdrop-blur-md rounded-2xl p-3 shadow-2xl hidden sm:block">
         <div className="text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-wider">Map POI & Risk Legend</div>
         <div className="space-y-1.5">
           <div className="flex items-center gap-2 text-xs text-slate-300">
@@ -311,7 +322,7 @@ export default function LiveMap() {
       </div>
 
       {/* Quick Layer Toggles */}
-      <div className="absolute bottom-24 right-4 z-[1000] flex flex-col gap-2">
+      <div className="absolute bottom-4 right-4 z-[500] flex flex-col gap-2">
         <button
           onClick={requestLocation}
           disabled={gpsLoading}
@@ -336,7 +347,7 @@ export default function LiveMap() {
 
       {/* Filter Side Panel */}
       {showFilters && (
-        <div className="absolute top-0 right-0 bottom-0 z-[1001] w-80 bg-slate-900 border-l border-slate-800 shadow-2xl flex flex-col">
+        <div className="absolute top-0 right-0 bottom-0 z-[1600] w-80 bg-slate-900 border-l border-slate-800 shadow-2xl flex flex-col">
           <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
             <h2 className="font-bold text-white text-base">Map Layers & Filter</h2>
             <button onClick={() => setShowFilters(false)} className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white">
@@ -379,7 +390,7 @@ export default function LiveMap() {
 
       {/* Selected POI Emergency Bottom Sheet Drawer */}
       {selectedPoi && (
-        <div className="absolute bottom-20 left-4 right-4 z-[1001] bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-2xl animate-in slide-in-from-bottom-5 max-w-md mx-auto">
+        <div className="absolute bottom-4 left-4 right-4 z-[1500] bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-2xl animate-in slide-in-from-bottom-5 max-w-md mx-auto">
           <div className="flex items-start justify-between border-b border-slate-800 pb-3 mb-3">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-xl">
@@ -448,7 +459,7 @@ export default function LiveMap() {
 
       {/* Selected Hotspot Bottom Sheet Drawer */}
       {selectedHotspot && (
-        <div className="absolute bottom-20 left-4 right-4 z-[1001] bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-2xl animate-in slide-in-from-bottom-5 max-w-md mx-auto">
+        <div className="absolute bottom-4 left-4 right-4 z-[1500] bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-2xl animate-in slide-in-from-bottom-5 max-w-md mx-auto">
           <div className="flex items-start justify-between border-b border-slate-800 pb-3 mb-3">
             <div>
               <div className="flex items-center gap-2 mb-1">

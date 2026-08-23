@@ -1,4 +1,4 @@
-import { Outlet, NavLink } from "react-router-dom";
+import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { Home, Map, Plus, Navigation, FileText } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -10,14 +10,17 @@ const NAV_ITEMS = [
 ];
 
 export default function CitizenLayout() {
+  const location = useLocation();
+  const isFullMapPage = location.pathname === "/map";
+
   return (
-    <div className="flex flex-col min-h-[100dvh] bg-zinc-50">
-      <main className="flex-1 pb-24">
+    <div className="flex flex-col h-[100dvh] w-full overflow-hidden bg-zinc-50">
+      <main className={`flex-1 ${isFullMapPage ? "pb-16 h-[calc(100dvh-4rem)] overflow-hidden" : "pb-20 overflow-y-auto"}`}>
         <Outlet />
       </main>
 
-      {/* Bottom nav — iOS safe area aware */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-zinc-200/60 z-50" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+      {/* Bottom nav — iOS safe area aware with high z-index (z-[3000]) */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-zinc-200/60 z-[3000]" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <div className="flex items-center justify-around px-2 py-1.5 max-w-lg mx-auto">
           {NAV_ITEMS.map(({ to, icon: Icon, label, primary }) => (
             <NavLink
