@@ -4,16 +4,18 @@ import L from "leaflet";
 import { reportsService, hotspotsService, contextPOIsService } from "@/api/services";
 import { RISK_LEVELS, CATEGORY_LABELS, SEVERITY_LABELS } from "@/lib/riskEngine";
 import RiskBadge, { ConfidenceBadge } from "@/components/RiskBadge";
-import { Filter, X, AlertTriangle, Phone, ShieldAlert, MapPin, Clock, Navigation, Sparkles, LocateFixed } from "lucide-react";
+import { Filter, X, AlertTriangle, Phone, ShieldAlert, MapPin, Clock, Navigation, Sparkles, LocateFixed, ChevronDown } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useGpsLocation } from "@/lib/gps";
+import { useLocationState } from "@/lib/locationContext";
+import LocationSelectorModal from "@/components/LocationSelectorModal";
 import "leaflet/dist/leaflet.css";
 
-// Fly map to user GPS location when it changes
+// Fly map to user location or selected coordinates when changed
 function FlyToLocation({ position }) {
   const map = useMap();
   useEffect(() => {
-    if (position) map.flyTo(position, 16, { duration: 1.2 });
+    if (position) map.flyTo(position, 15, { duration: 1.2 });
   }, [position, map]);
   return null;
 }
@@ -26,7 +28,7 @@ const gpsIcon = L.divIcon({
   iconAnchor: [9, 9],
 });
 
-// Centered on Greater Noida (Knowledge Park 2, IILM, Alpha 1, Beta 1)
+// Default fallback centered on Greater Noida
 const DEMO_CENTER = [28.4650, 77.4950];
 
 const POI_ICONS = {
@@ -97,6 +99,8 @@ const SEVERITY_FILTERS = [
 export default function LiveMap() {
   const { theme } = useTheme();
   const { userLocation, gpsLoading, requestLocation } = useGpsLocation();
+  const { currentLocality, currentZone, coords } = useLocationState();
+  const [showLocationModal, setShowLocationModal] = useState(false);
   const [reports, setReports] = useState([]);
   const [hotspots, setHotspots] = useState([]);
   const [pois, setPois] = useState([]);
@@ -157,7 +161,7 @@ export default function LiveMap() {
     <div className="relative h-[100dvh] w-full overflow-hidden bg-slate-950">
       {/* Map */}
       <MapContainer
-        center={userLocation || DEMO_CENTER}
+        center={userLocation || coords || DEMO_CENTER}
         zoom={14}
         className="h-full w-full"
         zoomControl={false}
@@ -167,10 +171,12 @@ export default function LiveMap() {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
 
+        {/* Fly to active user location / selected coords */}
+        <FlyToLocation position={userLocation || coords} />
+
         {/* GPS user location blue dot */}
         {userLocation && (
           <>
-            <FlyToLocation position={userLocation} />
             <Circle center={userLocation} radius={80} pathOptions={{ color: "#3b82f6", fillColor: "#3b82f6", fillOpacity: 0.08, weight: 1 }} />
             <Marker position={userLocation} icon={gpsIcon}>
               <Popup><div className="text-slate-900 text-xs font-semibold">📍 Your Location</div></Popup>
@@ -255,9 +261,14 @@ export default function LiveMap() {
       <div className="absolute top-0 left-0 right-0 z-[1000] bg-gradient-to-b from-slate-950 via-slate-950/80 to-transparent px-4 pt-10 pb-6 pointer-events-none">
         <div className="flex items-center justify-between pointer-events-auto max-w-lg mx-auto">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-1">
-              <Sparkles className="w-3 h-3" /> Greater Noida Telemetry
-            </div>
+            <button
+              onClick={() => setShowLocationModal(true)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 mb-1 active:scale-95 transition-all cursor-pointer"
+            >
+              <MapPin className="w-3 h-3 text-emerald-400" />
+              <span>{currentLocality} ({currentZone})</span>
+              <ChevronDown className="w-3 h-3 text-emerald-400/70" />
+            </button>
             <h1 className="text-white font-bold text-lg font-display">Live Risk & POI Map</h1>
             <p className="text-slate-300 text-xs font-medium flex items-center gap-1.5 mt-0.5">
               <span className="text-sky-400 font-bold bg-sky-500/20 px-1.5 py-0.5 rounded border border-sky-500/30">🐕 {totalSightedDogs} Sighted Dogs</span>
@@ -459,6 +470,8 @@ export default function LiveMap() {
           </div>
         </div>
       )}
+
+      <LocationSelectorModal isOpen={showLocationModal} onClose={() => setShowLocationModal(false)} />
     </div>
   );
 }

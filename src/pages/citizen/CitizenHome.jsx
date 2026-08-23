@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { reportsService, hotspotsService, alertsService, wardsService } from "@/api/services";
-import { MapPin, AlertTriangle, Navigation, Plus, Bell, HelpCircle, Shield, HeartPulse, Mic, Sparkles, ChevronRight } from "lucide-react";
+import { MapPin, AlertTriangle, Navigation, Plus, Bell, HelpCircle, Shield, HeartPulse, Mic, Sparkles, ChevronRight, ChevronDown } from "lucide-react";
 import ArvEmergencyModal from "@/components/ArvEmergencyModal";
+import LocationSelectorModal from "@/components/LocationSelectorModal";
+import { useLocationState } from "@/lib/locationContext";
 import { RISK_LEVELS, CONFIDENCE_LEVELS, calculateRiskScore } from "@/lib/riskEngine";
 import RiskBadge, { ConfidenceBadge } from "@/components/RiskBadge";
 import DemoBanner from "@/components/DemoBanner";
@@ -21,12 +23,14 @@ const SAFETY_TIPS = [
 ];
 
 export default function CitizenHome() {
+  const { currentLocality, currentZone } = useLocationState();
   const [reports, setReports] = useState([]);
   const [hotspots, setHotspots] = useState([]);
   const [alerts, setAlerts] = useState([]);
   const [wards, setWards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showArvModal, setShowArvModal] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -44,8 +48,16 @@ export default function CitizenHome() {
   }, []);
 
   const topHotspot = hotspots[0];
-  const currentLocality = "Sector 62 Noida";
-  const localReports = reports.filter(r => r.ward === currentLocality);
+  
+  // Filter reports for current active locality
+  const localReports = reports.filter(r => {
+    if (!r.ward && !r.location_label) return false;
+    const locLower = currentLocality.toLowerCase();
+    const wardLower = (r.ward || "").toLowerCase();
+    const labelLower = (r.location_label || "").toLowerCase();
+    return wardLower.includes(locLower) || labelLower.includes(locLower) || locLower.includes(wardLower.split(" ")[0]);
+  });
+
   const riskResult = calculateRiskScore(localReports);
   const riskConfig = RISK_LEVELS[riskResult.level] || RISK_LEVELS.unknown;
 
@@ -90,12 +102,16 @@ export default function CitizenHome() {
             </div>
           </div>
 
-          {/* Location Bar */}
-          <div className="flex items-center gap-2 text-zinc-300 text-xs mb-4 bg-white/10 backdrop-blur-md w-fit px-3 py-1.5 rounded-full border border-white/10">
-            <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+          {/* Interactive Location Bar */}
+          <button
+            onClick={() => setShowLocationModal(true)}
+            className="flex items-center gap-2 text-zinc-300 text-xs mb-4 bg-white/10 hover:bg-white/20 active:scale-95 transition-all backdrop-blur-md w-fit px-3.5 py-1.5 rounded-full border border-white/15 cursor-pointer group shadow-sm"
+          >
+            <MapPin className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
             <span className="font-semibold text-white">{currentLocality}</span>
-            <span className="text-zinc-400">· Noida Zone</span>
-          </div>
+            <span className="text-zinc-400">· {currentZone}</span>
+            <ChevronDown className="w-3 h-3 text-zinc-400 group-hover:text-white transition-colors ml-0.5" />
+          </button>
 
           {/* Primary Risk Card */}
           <motion.div
@@ -294,6 +310,7 @@ export default function CitizenHome() {
       </div>
 
       <ArvEmergencyModal isOpen={showArvModal} onClose={() => setShowArvModal(false)} />
+      <LocationSelectorModal isOpen={showLocationModal} onClose={() => setShowLocationModal(false)} />
     </div>
   );
 }
