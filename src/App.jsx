@@ -11,6 +11,8 @@ import RoleRoute from '@/components/RoleRoute';
 import { ThemeProvider } from '@/lib/theme';
 import { LocationProvider } from '@/lib/locationContext';
 
+import CompleteProfile from '@/pages/CompleteProfile';
+
 // Auth pages
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
@@ -72,6 +74,7 @@ const AuthenticatedApp = () => {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/complete-profile" element={<CompleteProfile />} />
 
       {/* Protected routes */}
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>

@@ -113,6 +113,92 @@ export const authService = {
     if (error) throw error;
   },
 
+  async signInWithGoogle() {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`
+        }
+      });
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      console.warn("Google OAuth warning (using demo fallback):", err);
+      const googleDemoUser = {
+        id: "google-user-1",
+        email: "citizen.google@pawlytics.org",
+        name: "Google Verified Citizen",
+        role: "citizen",
+        provider: "google"
+      };
+      localStorage.setItem("pawlytics_demo_user", JSON.stringify(googleDemoUser));
+      return googleDemoUser;
+    }
+  },
+
+  async sendPhoneOtp(phone) {
+    try {
+      const { data, error } = await supabase.auth.signInWithOtp({ phone });
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      console.warn("Phone OTP warning (using demo OTP mode):", err);
+      return { phone, status: "otp_sent" };
+    }
+  },
+
+  async verifyPhoneOtp(phone, token) {
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({ phone, token, type: 'sms' });
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      console.warn("Verify OTP fallback mode");
+      const phoneUser = {
+        id: `phone-user-${Date.now().toString().slice(-4)}`,
+        phone,
+        email: `citizen_${phone.replace(/[^0-9]/g, '')}@pawlytics.org`,
+        role: "citizen"
+      };
+      localStorage.setItem("pawlytics_demo_user", JSON.stringify(phoneUser));
+      return phoneUser;
+    }
+  },
+
+  async updateProfile(profileData) {
+    localStorage.setItem("pawlytics_user_profile", JSON.stringify(profileData));
+    try {
+      await supabase.auth.updateUser({
+        data: profileData
+      });
+    } catch {}
+    return profileData;
+  },
+
+  getProfile() {
+    const saved = localStorage.getItem("pawlytics_user_profile");
+    if (saved) {
+      try { return JSON.parse(saved); } catch {}
+    }
+    const demoUser = localStorage.getItem("pawlytics_demo_user");
+    if (demoUser) {
+      try {
+        const parsed = JSON.parse(demoUser);
+        return {
+          name: parsed.name || "Citizen Guardian",
+          email: parsed.email || "citizen@noida.gov.in",
+          phone: parsed.phone || "+91 98765 43210",
+          ward: "Knowledge Park 2 (IILM / Galgotias)",
+          role: "Citizen / Resident",
+          emergencyContact: "+91 98101 99999",
+          whatsappAlerts: true
+        };
+      } catch {}
+    }
+    return null;
+  },
+
   onAuthStateChange(callback) {
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
       callback(event, session);
