@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { reportsService, verificationsService } from "@/api/services";
 import { CATEGORY_LABELS, SEVERITY_LABELS } from "@/lib/riskEngine";
-import { CheckCircle, XCircle, Copy, ChevronDown, AlertTriangle, ShieldCheck } from "lucide-react";
+import { CheckCircle, XCircle, Copy, ChevronDown, AlertTriangle, ShieldCheck, Camera, Video, Maximize2, Eye, X } from "lucide-react";
 import { recordHumanCorrection } from "@/lib/activeLearning";
 
 const TRUST_LABELS = { 1.0: { label: "Established", color: "text-green-600" }, 0.7: { label: "New Reporter", color: "text-amber-500" }, 0.5: { label: "Flagged", color: "text-red-500" } };
@@ -19,6 +19,7 @@ export default function VerificationQueue() {
   const [filter, setFilter] = useState("pending");
   const [notes, setNotes] = useState({});
   const [processing, setProcessing] = useState(null);
+  const [selectedMediaModal, setSelectedMediaModal] = useState(null);
 
   useEffect(() => {
     reportsService.filter({ is_demo: true })
@@ -105,6 +106,9 @@ export default function VerificationQueue() {
           const hasCv = report.cv_status !== "no_image";
           const isPotentialDuplicate = report.status === "duplicate";
 
+          const mediaUrl = report.evidence_url || report.photo_url || report.image_url || report.video_url || report.media_url;
+          const isVideo = !!(report.video_url || (mediaUrl && (mediaUrl.includes(".mp4") || mediaUrl.includes(".webm") || mediaUrl.includes("video"))));
+
           return (
             <div key={i} className={`bg-white rounded-xl border transition-all ${isExpanded ? "border-blue-300 shadow-md" : "border-slate-200"}`}>
               <div
@@ -117,7 +121,15 @@ export default function VerificationQueue() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <div className="font-semibold text-slate-800 text-sm">{CATEGORY_LABELS[report.category]}</div>
+                      <div className="font-semibold text-slate-800 text-sm flex items-center gap-2">
+                        <span>{CATEGORY_LABELS[report.category]}</span>
+                        {mediaUrl && (
+                          <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium flex items-center gap-1 ${isVideo ? "bg-sky-100 text-sky-800 border border-sky-300" : "bg-emerald-100 text-emerald-800 border border-emerald-300"}`}>
+                            {isVideo ? <Video className="w-3 h-3 text-sky-600" /> : <Camera className="w-3 h-3 text-emerald-600" />}
+                            {isVideo ? "Video Evidence" : "Photo Evidence"}
+                          </span>
+                        )}
+                      </div>
                       <div className="text-xs text-slate-500 mt-0.5">{report.location_label} · {new Date(report.incident_timestamp).toLocaleString("en-IN")}</div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
@@ -159,6 +171,63 @@ export default function VerificationQueue() {
                       <div className="bg-slate-50 rounded-lg px-3 py-2">
                         <div className="text-xs font-medium text-slate-500 mb-1">Reporter's Description</div>
                         <div className="text-sm text-slate-700">{report.description}</div>
+                      </div>
+                    )}
+
+                    {/* Attached Media Evidence (Photo / Video) */}
+                    {mediaUrl ? (
+                      <div className="bg-slate-950 rounded-xl p-3 text-white space-y-2 border border-slate-800 shadow-inner">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-xs font-bold text-slate-200">
+                            {isVideo ? (
+                              <>
+                                <Video className="w-4 h-4 text-sky-400" />
+                                <span>Attached Incident Video Evidence</span>
+                              </>
+                            ) : (
+                              <>
+                                <Camera className="w-4 h-4 text-emerald-400" />
+                                <span>Attached Incident Photo Evidence</span>
+                              </>
+                            )}
+                          </div>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setSelectedMediaModal(mediaUrl); }}
+                            className="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-2.5 py-1 rounded-lg flex items-center gap-1 transition-colors font-medium"
+                          >
+                            <Maximize2 className="w-3 h-3" /> Inspect Fullscreen
+                          </button>
+                        </div>
+
+                        {isVideo ? (
+                          <div className="relative rounded-lg overflow-hidden bg-black max-h-[280px] border border-slate-800">
+                            <video
+                              src={mediaUrl}
+                              controls
+                              preload="metadata"
+                              className="w-full h-auto max-h-[280px] object-contain mx-auto"
+                            />
+                          </div>
+                        ) : (
+                          <div
+                            onClick={() => setSelectedMediaModal(mediaUrl)}
+                            className="relative rounded-lg overflow-hidden bg-black max-h-[260px] cursor-pointer group border border-slate-800"
+                          >
+                            <img
+                              src={mediaUrl}
+                              alt="Incident Media Attachment"
+                              className="w-full h-52 object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-xs font-bold text-white">
+                              <Eye className="w-4 h-4" /> Click for High-Res View
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="bg-slate-50 rounded-lg p-3 text-xs text-slate-400 border border-dashed border-slate-200 flex items-center justify-center gap-2">
+                        <Camera className="w-4 h-4 text-slate-300" />
+                        <span>No photo or video file was attached to this report</span>
                       </div>
                     )}
 
@@ -233,6 +302,40 @@ export default function VerificationQueue() {
           </div>
         )}
       </div>
+
+      {/* Fullscreen High-Res Media Lightbox Modal */}
+      {selectedMediaModal && (
+        <div
+          onClick={() => setSelectedMediaModal(null)}
+          className="fixed inset-0 z-[5000] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+        >
+          <button
+            onClick={() => setSelectedMediaModal(null)}
+            className="absolute top-4 right-4 text-white hover:text-slate-300 p-2 bg-slate-800/80 rounded-full border border-slate-700 transition-colors z-10"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-w-4xl max-h-[90vh] w-full flex flex-col items-center justify-center"
+          >
+            {selectedMediaModal.includes(".mp4") || selectedMediaModal.includes(".webm") || selectedMediaModal.includes("video") ? (
+              <video
+                src={selectedMediaModal}
+                controls
+                autoPlay
+                className="max-h-[85vh] w-auto max-w-full rounded-2xl border border-slate-800 shadow-2xl"
+              />
+            ) : (
+              <img
+                src={selectedMediaModal}
+                alt="Full Incident Media Attachment"
+                className="max-h-[85vh] w-auto max-w-full object-contain rounded-2xl border border-slate-800 shadow-2xl"
+              />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
