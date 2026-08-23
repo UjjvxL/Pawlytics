@@ -438,80 +438,82 @@ export default function RouteCheck() {
               </div>
             </div>
           ) : (
-          <MapContainer
-            center={routeData.center}
-            zoom={routeData.zoom}
-            className="h-full w-full"
-            zoomControl={false}
-            key={routeData.routes[0]?.id || 'map'}
-          >
-            <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-              attribution='&copy; CARTO & OpenStreetMap'
-            />
-
-            {activeRoute && <MapAutoBounds polylineCoords={activeRoute.path} />}
-
-            {/* Render all routes with distinction */}
-            {routeData.routes.map((route, idx) => {
-              const isSelected = idx === selectedRouteIdx;
-              return (
-                <Polyline
-                  key={route.id}
-                  positions={route.path}
-                  pathOptions={{
-                    color: isSelected ? route.color : "#475569",
-                    weight: isSelected ? 6 : 3,
-                    opacity: isSelected ? 1 : 0.4,
-                    dashArray: isSelected ? undefined : "6 6"
-                  }}
-                  eventHandlers={{ click: () => setSelectedRouteIdx(idx) }}
-                />
-              );
-            })}
-
-            {/* Hotspot Circles */}
-            {hotspots.map((h, i) => (
-              <Circle
-                key={i}
-                center={[h.center_lat, h.center_lng]}
-                radius={h.radius_meters || 200}
-                pathOptions={{
-                  color: "#e11d48",
-                  fillColor: "#e11d48",
-                  fillOpacity: 0.18,
-                  weight: 1.5,
-                  dashArray: "4 4"
-                }}
-              />
-            ))}
-
-            {/* Interactive POI Markers */}
-            {filteredPois.map((poi) => (
-              <Marker
-                key={poi.id}
-                position={[poi.latitude, poi.longitude]}
-                icon={createCustomPoiIcon(poi.poi_type)}
-                eventHandlers={{ click: () => setSelectedPoiModal(poi) }}
+            <>
+              <MapContainer
+                center={routeData.center}
+                zoom={routeData.zoom}
+                className="h-full w-full"
+                zoomControl={false}
+                key={routeData.routes[0]?.id || 'map'}
               >
-                <Popup className="custom-dark-popup">
-                  <div className="p-1 text-slate-900">
-                    <div className="font-bold text-sm">{poi.name}</div>
-                    <div className="text-xs text-slate-600">{poi.address || poi.ward}</div>
-                    {poi.phone && (
-                      <div className="text-xs text-emerald-600 font-semibold mt-1">📞 {poi.phone}</div>
-                    )}
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
-          </MapContainer>
+                <TileLayer
+                  url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                  attribution='&copy; CARTO & OpenStreetMap'
+                />
 
-          {/* Map Overlay Badge */}
-          <div className="absolute top-3 left-3 z-[400] bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-800 flex items-center gap-2 text-xs">
-            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-slate-300 font-medium">Interactive Street Map</span>
-          </div>
+                {activeRoute && <MapAutoBounds polylineCoords={activeRoute.path} />}
+
+                {/* Render all routes with distinction */}
+                {routeData.routes.map((route, idx) => {
+                  const isSelected = idx === selectedRouteIdx;
+                  return (
+                    <Polyline
+                      key={route.id}
+                      positions={route.path}
+                      pathOptions={{
+                        color: isSelected ? route.color : "#475569",
+                        weight: isSelected ? 6 : 3,
+                        opacity: isSelected ? 1 : 0.4,
+                        dashArray: isSelected ? undefined : "6 6"
+                      }}
+                      eventHandlers={{ click: () => setSelectedRouteIdx(idx) }}
+                    />
+                  );
+                })}
+
+                {/* Hotspot Circles */}
+                {hotspots.map((h, i) => (
+                  <Circle
+                    key={i}
+                    center={[h.center_lat, h.center_lng]}
+                    radius={h.radius_meters || 200}
+                    pathOptions={{
+                      color: "#e11d48",
+                      fillColor: "#e11d48",
+                      fillOpacity: 0.18,
+                      weight: 1.5,
+                      dashArray: "4 4"
+                    }}
+                  />
+                ))}
+
+                {/* Interactive POI Markers */}
+                {filteredPois.map((poi) => (
+                  <Marker
+                    key={poi.id}
+                    position={[poi.latitude, poi.longitude]}
+                    icon={createCustomPoiIcon(poi.poi_type)}
+                    eventHandlers={{ click: () => setSelectedPoiModal(poi) }}
+                  >
+                    <Popup className="custom-dark-popup">
+                      <div className="p-1 text-slate-900">
+                        <div className="font-bold text-sm">{poi.name}</div>
+                        <div className="text-xs text-slate-600">{poi.address || poi.ward}</div>
+                        {poi.phone && (
+                          <div className="text-xs text-emerald-600 font-semibold mt-1">📞 {poi.phone}</div>
+                        )}
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
+
+              {/* Map Overlay Badge */}
+              <div className="absolute top-3 left-3 z-[400] bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-800 flex items-center gap-2 text-xs">
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-slate-300 font-medium">Interactive Street Map</span>
+              </div>
+            </>
           )}
         </div>
 
