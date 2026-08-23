@@ -12,11 +12,14 @@ export default function VoiceReportInput({ onStructuredVoiceResult }) {
   const [language, setLanguage] = useState("hi-IN"); // Default Hindi (India)
   const [voiceParsed, setVoiceParsed] = useState(null);
 
+  const [errorMsg, setErrorMsg] = useState("");
+
   const startVoiceIngestion = () => {
+    setErrorMsg("");
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      alert("Speech recognition is not supported in this browser version. You can type description manually.");
+      setErrorMsg("Web Speech API is not supported in this browser version. You can type description manually.");
       return;
     }
 
@@ -24,7 +27,7 @@ export default function VoiceReportInput({ onStructuredVoiceResult }) {
       const recognition = new SpeechRecognition();
       recognition.lang = language;
       recognition.continuous = false;
-      recognition.interimResults = false;
+      recognition.interimResults = true;
 
       recognition.onstart = () => {
         setIsListening(true);
@@ -32,15 +35,24 @@ export default function VoiceReportInput({ onStructuredVoiceResult }) {
       };
 
       recognition.onresult = (event) => {
-        const spokenText = event.results[0][0].transcript;
-        console.log("Voice transcript:", spokenText);
-        setTranscript(spokenText);
-        parseSpokenTranscript(spokenText);
+        let currentTranscript = "";
+        for (let i = 0; i < event.results.length; i++) {
+          currentTranscript += event.results[i][0].transcript;
+        }
+        setTranscript(currentTranscript);
+        parseSpokenTranscript(currentTranscript);
       };
 
       recognition.onerror = (err) => {
         console.warn("Speech recognition error:", err);
         setIsListening(false);
+        if (err.error === "not-allowed" || err.error === "service-not-allowed") {
+          setErrorMsg("Microphone access blocked. Please grant microphone permission in browser settings.");
+        } else if (err.error === "no-speech") {
+          setErrorMsg("No speech detected. Tap mic and speak clearly.");
+        } else {
+          setErrorMsg(`Voice input error (${err.error}). You can type your report.`);
+        }
       };
 
       recognition.onend = () => {
@@ -51,6 +63,7 @@ export default function VoiceReportInput({ onStructuredVoiceResult }) {
     } catch (err) {
       console.warn("Speech recognition init exception:", err);
       setIsListening(false);
+      setErrorMsg("Failed to start microphone. Please check browser permissions.");
     }
   };
 
@@ -131,6 +144,13 @@ export default function VoiceReportInput({ onStructuredVoiceResult }) {
           )}
         </button>
       </div>
+
+      {errorMsg && (
+        <div className="bg-red-950/60 border border-red-800 text-red-300 text-xs p-3 rounded-xl flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
 
       {transcript && (
         <div className="bg-slate-800/90 border border-slate-700/80 rounded-xl p-3 text-xs space-y-2">

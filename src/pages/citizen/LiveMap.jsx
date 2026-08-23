@@ -4,50 +4,66 @@ import L from "leaflet";
 import { reportsService, hotspotsService, contextPOIsService } from "@/api/services";
 import { RISK_LEVELS, CATEGORY_LABELS, SEVERITY_LABELS } from "@/lib/riskEngine";
 import RiskBadge, { ConfidenceBadge } from "@/components/RiskBadge";
-import { Filter, X, AlertTriangle } from "lucide-react";
+import { Filter, X, AlertTriangle, Phone, ShieldAlert, MapPin, Clock, Navigation, Sparkles } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import "leaflet/dist/leaflet.css";
 
-const DEMO_CENTER = [28.5740, 77.3410];
-
-const POI_COLORS = {
-  school: "#3B82F6",
-  hospital: "#10B981",
-  waste_site: "#F59E0B",
-  park: "#6EE7B7",
-  arv_facility: "#8B5CF6",
-  feeding_zone: "#F97316",
-  road: "#94A3B8",
-};
+// Centered on Greater Noida (Knowledge Park 2, IILM, Alpha 1, Beta 1)
+const DEMO_CENTER = [28.4650, 77.4950];
 
 const POI_ICONS = {
   school: "🏫",
   hospital: "🏥",
+  arv_facility: "🚨",
+  vet_clinic: "🐾",
   waste_site: "🗑️",
   park: "🌳",
-  arv_facility: "💉",
   feeding_zone: "🍖",
-  road: "🚗",
 };
 
-function createSeverityIcon(severity) {
+// Enhanced Severity Marker with Sighted Dog Count Badge
+function createSeverityIcon(severity, dogCount = 1) {
   const colors = { 1: "#6B7280", 2: "#D97706", 3: "#EA580C", 4: "#DC2626", 5: "#991B1B" };
   const color = colors[severity] || "#6B7280";
   return L.divIcon({
-    html: `<div style="width:12px;height:12px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.3)"></div>`,
+    html: `
+      <div style="position:relative; display:flex; align-items:center; justify-center;">
+        <div style="width:16px;height:16px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.5)"></div>
+        <div style="
+          position: absolute;
+          top: -12px;
+          right: -14px;
+          background: #0f172a;
+          color: #38bdf8;
+          border: 1px solid #0284c7;
+          border-radius: 8px;
+          padding: 1px 4px;
+          font-size: 10px;
+          font-weight: 700;
+          white-space: nowrap;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+          display: flex;
+          align-items: center;
+          gap: 2px;
+        ">
+          🐕 ${dogCount}
+        </div>
+      </div>
+    `,
     className: "",
-    iconSize: [12, 12],
-    iconAnchor: [6, 6],
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
   });
 }
 
 function createPoiIcon(type) {
   const emoji = POI_ICONS[type] || "📍";
+  const bg = type === "vet_clinic" ? "#10b981" : type === "arv_facility" ? "#e11d48" : type === "hospital" ? "#0284c7" : type === "school" ? "#8b5cf6" : "#64748b";
   return L.divIcon({
-    html: `<div style="font-size:16px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.4))">${emoji}</div>`,
+    html: `<div style="background:${bg};color:white;width:30px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 3px 10px rgba(0,0,0,0.3);border:2px solid white;">${emoji}</div>`,
     className: "",
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
   });
 }
 
@@ -68,6 +84,7 @@ export default function LiveMap() {
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedHotspot, setSelectedHotspot] = useState(null);
+  const [selectedPoi, setSelectedPoi] = useState(null);
   const [timeFilter, setTimeFilter] = useState("30d");
   const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
   const [showPois, setShowPois] = useState(true);
@@ -93,12 +110,14 @@ export default function LiveMap() {
   };
 
   const filteredReports = reports.filter(r => {
-    const ts = new Date(r.incident_timestamp || r.created_date).getTime();
+    const ts = new Date(r.incident_timestamp || r.created_date || Date.now()).getTime();
     if (Date.now() - ts > getTimeMs()) return false;
     if (showVerifiedOnly && r.verification_status !== "verified") return false;
     if (selectedSeverities.length > 0 && !selectedSeverities.includes(r.severity_level)) return false;
     return true;
   });
+
+  const totalSightedDogs = filteredReports.reduce((sum, r) => sum + (r.dog_count || 1), 0);
 
   const toggleSeverity = (v) => {
     setSelectedSeverities(prev => prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v]);
@@ -106,17 +125,17 @@ export default function LiveMap() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-slate-900">
+      <div className="flex items-center justify-center h-[100dvh] bg-slate-950">
         <div className="text-center text-white">
-          <div className="w-10 h-10 border-4 border-slate-600 border-t-blue-400 rounded-full animate-spin mx-auto mb-3" />
-          <div className="text-sm text-slate-400">Loading conflict intelligence layer...</div>
+          <div className="w-10 h-10 border-4 border-slate-700 border-t-emerald-500 rounded-full animate-spin mx-auto mb-3" />
+          <div className="text-sm text-slate-400 font-medium">Loading Greater Noida Conflict Intelligence Layer...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="relative h-screen w-full overflow-hidden">
+    <div className="relative h-[100dvh] w-full overflow-hidden bg-slate-950">
       {/* Map */}
       <MapContainer
         center={DEMO_CENTER}
@@ -125,10 +144,8 @@ export default function LiveMap() {
         zoomControl={false}
       >
         <TileLayer
-          url={theme === "dark"
-            ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-            : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"}
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
 
         {/* Hotspot circles */}
@@ -142,38 +159,40 @@ export default function LiveMap() {
               pathOptions={{
                 color: cfg.color,
                 fillColor: cfg.color,
-                fillOpacity: 0.15,
+                fillOpacity: 0.18,
                 weight: 2,
                 dashArray: "4 4",
               }}
-              eventHandlers={{ click: () => setSelectedHotspot(h) }}
+              eventHandlers={{ click: () => { setSelectedHotspot(h); setSelectedPoi(null); } }}
             />
           );
         })}
 
-        {/* Report markers */}
+        {/* Report markers with dog count badges */}
         {filteredReports.map((r, i) => {
           const isVerified = r.verification_status === "verified";
           return (
             <Marker
               key={i}
               position={[r.latitude, r.longitude]}
-              icon={createSeverityIcon(r.severity_level)}
+              icon={createSeverityIcon(r.severity_level, r.dog_count || 1)}
             >
               <Popup>
-                <div className="min-w-[200px]">
-                  <div className="font-semibold text-slate-800 mb-1">{CATEGORY_LABELS[r.category]}</div>
-                  <div className="text-xs text-slate-500 mb-2">
-                    {SEVERITY_LABELS[r.severity_level]?.label} · {r.location_label}
+                <div className="min-w-[210px] text-slate-900">
+                  <div className="font-bold text-sm text-slate-900 mb-1">{CATEGORY_LABELS[r.category] || "Incident Report"}</div>
+                  <div className="text-xs text-slate-600 mb-1 flex items-center justify-between">
+                    <span>{SEVERITY_LABELS[r.severity_level]?.label}</span>
+                    <span className="font-bold text-slate-900 bg-sky-100 text-sky-800 px-1.5 py-0.5 rounded">🐕 {r.dog_count || 1} dogs</span>
                   </div>
+                  <div className="text-xs text-slate-500 mb-1.5">{r.location_label}</div>
                   {isVerified && (
-                    <div className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded mb-1">✓ Verified</div>
+                    <span className="inline-block text-[11px] text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded font-semibold mb-1">✓ Verified Telemetry</span>
                   )}
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs text-slate-500">
                     {new Date(r.incident_timestamp).toLocaleDateString("en-IN")}
                   </div>
                   {r.description && (
-                    <div className="text-xs text-slate-600 mt-2 border-t pt-2">{r.description}</div>
+                    <div className="text-xs text-slate-700 mt-2 border-t pt-2 leading-relaxed">{r.description}</div>
                   )}
                 </div>
               </Popup>
@@ -187,88 +206,103 @@ export default function LiveMap() {
             key={i}
             position={[poi.latitude, poi.longitude]}
             icon={createPoiIcon(poi.poi_type)}
+            eventHandlers={{ click: () => { setSelectedPoi(poi); setSelectedHotspot(null); } }}
           >
             <Popup>
-              <div>
-                <div className="font-medium text-slate-800 text-sm">{poi.name}</div>
-                <div className="text-xs text-slate-500 capitalize mt-0.5">{poi.poi_type.replace("_", " ")}</div>
+              <div className="text-slate-900 min-w-[180px]">
+                <div className="font-bold text-sm">{poi.name}</div>
+                <div className="text-xs text-slate-600 capitalize">{poi.poi_type.replace("_", " ")} · {poi.ward}</div>
+                {poi.phone && (
+                  <div className="text-xs text-emerald-700 font-semibold mt-1">📞 {poi.phone}</div>
+                )}
               </div>
             </Popup>
           </Marker>
         ))}
       </MapContainer>
 
-      {/* Top header overlay */}
-      <div className="absolute top-0 left-0 right-0 z-[1000] bg-gradient-to-b from-slate-900/80 to-transparent px-4 pt-10 pb-6 pointer-events-none">
-        <div className="flex items-center justify-between pointer-events-auto">
+      {/* Top header overlay with Active Sighted Dogs Telemetry */}
+      <div className="absolute top-0 left-0 right-0 z-[1000] bg-gradient-to-b from-slate-950 via-slate-950/80 to-transparent px-4 pt-10 pb-6 pointer-events-none">
+        <div className="flex items-center justify-between pointer-events-auto max-w-lg mx-auto">
           <div>
-            <div className="text-white font-bold text-lg font-display">Live Risk Map</div>
-            <div className="text-slate-300 text-xs">{filteredReports.length} reports · {hotspots.length} hotspots</div>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-1">
+              <Sparkles className="w-3 h-3" /> Greater Noida Telemetry
+            </div>
+            <h1 className="text-white font-bold text-lg font-display">Live Risk & POI Map</h1>
+            <p className="text-slate-300 text-xs font-medium flex items-center gap-1.5 mt-0.5">
+              <span className="text-sky-400 font-bold bg-sky-500/20 px-1.5 py-0.5 rounded border border-sky-500/30">🐕 {totalSightedDogs} Sighted Dogs</span>
+              <span>·</span>
+              <span>{filteredReports.length} reports</span>
+              <span>·</span>
+              <span>{hotspots.length} hotspots</span>
+            </p>
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 bg-white/90 backdrop-blur-sm text-slate-800 px-3 py-2 rounded-xl text-sm font-medium shadow-lg"
+            className="flex items-center gap-2 bg-slate-900/90 border border-slate-800 text-white px-3.5 py-2 rounded-xl text-xs font-semibold shadow-xl backdrop-blur-md active:scale-95 transition-all"
           >
-            <Filter className="w-4 h-4" />
+            <Filter className="w-4 h-4 text-emerald-400" />
             Filters
           </button>
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="absolute bottom-24 left-4 z-[1000] bg-white/95 backdrop-blur-sm rounded-xl p-3 shadow-lg">
-        <div className="text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wider">Risk Level</div>
-        {Object.entries(RISK_LEVELS).slice(1).map(([key, val]) => (
-          <div key={key} className="flex items-center gap-2 mb-1">
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: val.color }} />
-            <span className="text-xs text-slate-600">{val.label}</span>
+      {/* Layer legend */}
+      <div className="absolute bottom-24 left-4 z-[1000] bg-slate-900/95 border border-slate-800 backdrop-blur-md rounded-2xl p-3.5 shadow-2xl">
+        <div className="text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-wider">Map POI & Risk Legend</div>
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2 text-xs text-slate-300">
+            <span className="text-sky-400 font-bold text-[11px]">🐕 4</span> <span>Sighted Dogs Marker Badge</span>
           </div>
-        ))}
-        <div className="border-t border-slate-200 mt-2 pt-2 text-xs text-slate-400">
-          ● Incident · ◯ Hotspot zone
+          <div className="flex items-center gap-2 text-xs text-slate-300">
+            <span className="text-sm">🐾</span> <span>Vet Shops & Clinics</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-slate-300">
+            <span className="text-sm">🚨</span> <span>ARV Emergency Care</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-slate-300">
+            <span className="text-sm">🏥</span> <span>Hospitals</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-slate-300">
+            <span className="text-sm">🏫</span> <span>Schools & Campus</span>
+          </div>
         </div>
       </div>
 
-      {/* Layer toggles */}
+      {/* Quick Layer Toggles */}
       <div className="absolute bottom-24 right-4 z-[1000] flex flex-col gap-2">
         <button
           onClick={() => setShowHotspots(!showHotspots)}
-          className={`px-3 py-2 rounded-xl text-xs font-medium shadow-lg transition-colors ${showHotspots ? "bg-orange-600 text-white" : "bg-white/90 text-slate-600"}`}
+          className={`px-3 py-2 rounded-xl text-xs font-bold shadow-xl transition-all backdrop-blur-md ${showHotspots ? "bg-rose-600 text-white" : "bg-slate-900/90 text-slate-400 border border-slate-800"}`}
         >
           🔥 Hotspots
         </button>
         <button
           onClick={() => setShowPois(!showPois)}
-          className={`px-3 py-2 rounded-xl text-xs font-medium shadow-lg transition-colors ${showPois ? "bg-blue-700 text-white" : "bg-white/90 text-slate-600"}`}
+          className={`px-3 py-2 rounded-xl text-xs font-bold shadow-xl transition-all backdrop-blur-md ${showPois ? "bg-emerald-500 text-slate-950" : "bg-slate-900/90 text-slate-400 border border-slate-800"}`}
         >
-          📍 Layers
-        </button>
-        <button
-          onClick={() => setShowVerifiedOnly(!showVerifiedOnly)}
-          className={`px-3 py-2 rounded-xl text-xs font-medium shadow-lg transition-colors ${showVerifiedOnly ? "bg-green-600 text-white" : "bg-white/90 text-slate-600"}`}
-        >
-          ✓ Verified
+          🐾 Vet & Hospitals
         </button>
       </div>
 
-      {/* Filter panel */}
+      {/* Filter Side Panel */}
       {showFilters && (
-        <div className="absolute top-0 right-0 bottom-0 z-[1001] w-72 bg-white shadow-2xl flex flex-col">
-          <div className="flex items-center justify-between px-4 py-4 border-b border-slate-200">
-            <h2 className="font-semibold text-slate-800">Map Filters</h2>
-            <button onClick={() => setShowFilters(false)} className="p-1 hover:bg-slate-100 rounded-lg">
-              <X className="w-5 h-5 text-slate-500" />
+        <div className="absolute top-0 right-0 bottom-0 z-[1001] w-80 bg-slate-900 border-l border-slate-800 shadow-2xl flex flex-col">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
+            <h2 className="font-bold text-white text-base">Map Layers & Filter</h2>
+            <button onClick={() => setShowFilters(false)} className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white">
+              <X className="w-5 h-5" />
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-5">
+          <div className="flex-1 overflow-y-auto p-5 space-y-6">
             <div>
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Time Window</div>
-              <div className="grid grid-cols-4 gap-1.5">
+              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Time Window</div>
+              <div className="grid grid-cols-4 gap-2">
                 {TIME_FILTERS.map(t => (
                   <button
                     key={t}
                     onClick={() => setTimeFilter(t)}
-                    className={`py-2 rounded-lg text-sm font-medium transition-colors ${timeFilter === t ? "bg-blue-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+                    className={`py-2 rounded-xl text-xs font-bold transition-all ${timeFilter === t ? "bg-emerald-500 text-slate-950" : "bg-slate-950 border border-slate-800 text-slate-400 hover:text-slate-200"}`}
                   >
                     {t}
                   </button>
@@ -276,36 +310,17 @@ export default function LiveMap() {
               </div>
             </div>
             <div>
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Severity Level</div>
-              <div className="space-y-1.5">
+              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Severity Level</div>
+              <div className="space-y-2">
                 {SEVERITY_FILTERS.map(s => (
                   <button
                     key={s.value}
                     onClick={() => toggleSeverity(s.value)}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${selectedSeverities.includes(s.value) ? "bg-blue-50 border border-blue-200 text-blue-800" : "bg-slate-50 border border-transparent text-slate-600 hover:bg-slate-100"}`}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${selectedSeverities.includes(s.value) ? "bg-slate-800 border border-emerald-500/50 text-emerald-400" : "bg-slate-950 border border-slate-800 text-slate-400"}`}
                   >
                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: SEVERITY_LABELS[s.value]?.color }} />
                     {s.label}
                   </button>
-                ))}
-                {selectedSeverities.length > 0 && (
-                  <button onClick={() => setSelectedSeverities([])} className="text-xs text-slate-500 underline">Clear severity filter</button>
-                )}
-              </div>
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Data Layers</div>
-              <div className="space-y-2">
-                {[["showHotspots", showHotspots, setShowHotspots, "Hotspot zones"], ["showPois", showPois, setShowPois, "Context POIs (schools, waste, etc.)"], ["showVerifiedOnly", showVerifiedOnly, setShowVerifiedOnly, "Verified reports only"]].map(([k, val, setter, label]) => (
-                  <label key={k} className="flex items-center gap-3 cursor-pointer">
-                    <div
-                      onClick={() => setter(!val)}
-                      className={`w-9 h-5 rounded-full transition-colors relative ${val ? "bg-blue-900" : "bg-slate-200"}`}
-                    >
-                      <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${val ? "translate-x-4" : "translate-x-0.5"}`} />
-                    </div>
-                    <span className="text-sm text-slate-600">{label}</span>
-                  </label>
                 ))}
               </div>
             </div>
@@ -313,50 +328,96 @@ export default function LiveMap() {
         </div>
       )}
 
-      {/* Hotspot detail panel */}
-      {selectedHotspot && (
-        <div className="absolute bottom-20 left-4 right-4 z-[1001] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
-          <div className="flex items-start justify-between p-4 border-b border-slate-100">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <AlertTriangle className="w-4 h-4 text-orange-500" />
-                <span className="text-xs font-medium text-orange-600 uppercase tracking-wider">Conflict Hotspot</span>
+      {/* Selected POI Emergency Bottom Sheet Drawer */}
+      {selectedPoi && (
+        <div className="absolute bottom-20 left-4 right-4 z-[1001] bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-2xl animate-in slide-in-from-bottom-5 max-w-md mx-auto">
+          <div className="flex items-start justify-between border-b border-slate-800 pb-3 mb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-xl">
+                {POI_ICONS[selectedPoi.poi_type] || "📍"}
               </div>
-              <div className="font-semibold text-slate-800">{selectedHotspot.name}</div>
+              <div>
+                <h3 className="font-bold text-white text-base">{selectedPoi.name}</h3>
+                <p className="text-xs text-slate-400 capitalize">{selectedPoi.poi_type.replace("_", " ")} · {selectedPoi.ward}</p>
+              </div>
             </div>
-            <button onClick={() => setSelectedHotspot(null)} className="p-1 hover:bg-slate-100 rounded-lg">
-              <X className="w-4 h-4 text-slate-400" />
+            <button onClick={() => setSelectedPoi(null)} className="p-1 text-slate-400 hover:text-white">
+              <X className="w-4 h-4" />
             </button>
           </div>
-          <div className="p-4">
-            <div className="flex items-center gap-3 mb-3">
+
+          <div className="space-y-2 text-xs text-slate-300 mb-4">
+            {selectedPoi.address && (
+              <div className="flex items-start gap-2">
+                <MapPin className="w-4 h-4 text-slate-500 flex-shrink-0 mt-0.5" />
+                <span>{selectedPoi.address}</span>
+              </div>
+            )}
+            {selectedPoi.hours && (
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                <span>{selectedPoi.hours}</span>
+              </div>
+            )}
+            {selectedPoi.services && (
+              <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-slate-400 mt-2">
+                <strong className="text-slate-200 block mb-1">Services & Care:</strong>
+                {selectedPoi.services}
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            {selectedPoi.phone && (
+              <a
+                href={`tel:${selectedPoi.phone.replace(/[^0-9+]/g, '')}`}
+                className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3 rounded-xl flex items-center justify-center gap-2 text-xs shadow-lg shadow-emerald-500/20"
+              >
+                <Phone className="w-4 h-4" /> Call Clinic
+              </a>
+            )}
+            {selectedPoi.emergency_contact ? (
+              <a
+                href={`tel:${selectedPoi.emergency_contact.replace(/[^0-9+]/g, '')}`}
+                className="bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 text-xs shadow-lg shadow-rose-600/20"
+              >
+                <ShieldAlert className="w-4 h-4" /> 24/7 Emergency
+              </a>
+            ) : (
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedPoi.name + " Greater Noida")}`}
+                target="_blank"
+                rel="noreferrer"
+                className="bg-slate-800 hover:bg-slate-700 text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 text-xs"
+              >
+                <Navigation className="w-4 h-4" /> Directions
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Selected Hotspot Bottom Sheet Drawer */}
+      {selectedHotspot && (
+        <div className="absolute bottom-20 left-4 right-4 z-[1001] bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-2xl animate-in slide-in-from-bottom-5 max-w-md mx-auto">
+          <div className="flex items-start justify-between border-b border-slate-800 pb-3 mb-3">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <AlertTriangle className="w-4 h-4 text-rose-500" />
+                <span className="text-xs font-bold text-rose-400 uppercase tracking-wider">Conflict Hotspot Zone</span>
+              </div>
+              <h3 className="font-bold text-white text-base">{selectedHotspot.name}</h3>
+            </div>
+            <button onClick={() => setSelectedHotspot(null)} className="p-1 text-slate-400 hover:text-white">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="text-xs text-slate-300 space-y-2">
+            <div className="flex items-center gap-3">
               <RiskBadge level={selectedHotspot.risk_level} />
               <ConfidenceBadge confidence={selectedHotspot.confidence} />
             </div>
-            <div className="text-sm text-slate-600 mb-3">
-              {selectedHotspot.verified_report_count} verified report{selectedHotspot.verified_report_count !== 1 ? 's' : ''} in the last {selectedHotspot.time_window_days} days.
-              Multiple conflict reports have been recorded around this location.
-            </div>
-            {selectedHotspot.time_pattern && (
-              <div className="flex items-start gap-2 text-sm text-slate-500 mb-2">
-                <span>⏱</span> {selectedHotspot.time_pattern}
-              </div>
-            )}
-            {selectedHotspot.group_presence_count > 0 && (
-              <div className="flex items-start gap-2 text-sm text-slate-500 mb-2">
-                <span>🐕</span> {selectedHotspot.group_presence_count} reports involved group presence
-              </div>
-            )}
-            {selectedHotspot.nearby_factors?.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {selectedHotspot.nearby_factors.map((f, i) => (
-                  <span key={i} className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">{f}</span>
-                ))}
-              </div>
-            )}
-            <div className="mt-3 text-xs text-slate-400 bg-slate-50 rounded-lg px-3 py-2 border border-slate-200">
-              Risk estimates are based on verified historical reports and should not be interpreted as predictions of individual animal behavior.
-            </div>
+            <p className="text-slate-400 leading-relaxed pt-1">{selectedHotspot.explanation}</p>
           </div>
         </div>
       )}

@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+/* Pawlytics Design System — Premium Redesign */
+/* Fonts loaded via index.html: Geist, Satoshi, Geist Mono */
 
 @tailwind base;
 @tailwind components;
@@ -6,41 +7,41 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 220 20% 10%;
+    --background: 0 0% 99%;
+    --foreground: 225 15% 12%;
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 10%;
+    --card-foreground: 225 15% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 10%;
+    --popover-foreground: 225 15% 12%;
     --primary: 222 47% 22%;
     --primary-foreground: 0 0% 98%;
-    --secondary: 215 20% 95%;
-    --secondary-foreground: 220 20% 20%;
-    --muted: 215 20% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 215 20% 93%;
-    --accent-foreground: 220 20% 20%;
-    --destructive: 0 84% 60%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 225 15% 18%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 160 84% 39%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 347 77% 50%;
     --destructive-foreground: 0 0% 98%;
-    --border: 215 20% 90%;
-    --input: 215 20% 90%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
     --ring: 222 47% 22%;
     --chart-1: 222 47% 35%;
-    --chart-2: 25 95% 53%;
-    --chart-3: 142 71% 45%;
-    --chart-4: 0 84% 60%;
-    --chart-5: 271 81% 56%;
-    --radius: 0.5rem;
-    --font-heading: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
-    --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
-    --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
-    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    --chart-2: 160 84% 39%;
+    --chart-3: 25 95% 53%;
+    --chart-4: 347 77% 50%;
+    --chart-5: 262 83% 58%;
+    --radius: 0.625rem;
+    --font-heading: 'Satoshi', ui-sans-serif, system-ui, sans-serif;
+    --font-body: 'Geist', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Satoshi', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     --sidebar-background: 222 47% 18%;
-    --sidebar-foreground: 215 20% 85%;
-    --sidebar-primary: 215 20% 95%;
+    --sidebar-foreground: 220 14% 85%;
+    --sidebar-primary: 220 14% 95%;
     --sidebar-primary-foreground: 222 47% 18%;
     --sidebar-accent: 222 47% 26%;
-    --sidebar-accent-foreground: 215 20% 90%;
+    --sidebar-accent-foreground: 220 14% 90%;
     --sidebar-border: 222 47% 26%;
     --sidebar-ring: 222 47% 50%;
   }
@@ -52,91 +53,119 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+    font-family: 'Satoshi', ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.02em;
   }
 }
 
+/* Subtle grain noise overlay — breaks digital flatness */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
 /* Risk level color utilities */
-.risk-unknown { @apply bg-gray-100 text-gray-600 border-gray-200; }
-.risk-low { @apply bg-green-50 text-green-700 border-green-200; }
+.risk-unknown { @apply bg-zinc-100 text-zinc-600 border-zinc-200; }
+.risk-low { @apply bg-emerald-50 text-emerald-700 border-emerald-200; }
 .risk-moderate { @apply bg-amber-50 text-amber-700 border-amber-200; }
 .risk-elevated { @apply bg-orange-50 text-orange-700 border-orange-200; }
-.risk-high { @apply bg-red-50 text-red-700 border-red-200; }
-.risk-very_high { @apply bg-red-100 text-red-900 border-red-300; }
+.risk-high { @apply bg-rose-50 text-rose-700 border-rose-200; }
+.risk-very_high { @apply bg-rose-100 text-rose-900 border-rose-300; }
 
 /* Leaflet map customizations */
 .leaflet-container {
-  font-family: 'Inter', sans-serif;
-  border-radius: 0.75rem;
+  font-family: 'Geist', sans-serif;
+  border-radius: 1rem;
 }
 .leaflet-popup-content-wrapper {
-  border-radius: 0.75rem;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
-  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  box-shadow: 0 12px 40px -8px rgba(26, 39, 68, 0.15);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.92);
 }
 .leaflet-popup-tip {
-  background: white;
+  background: rgba(255, 255, 255, 0.92);
 }
 
-/* Dark mode — structural slate overrides (brand + risk colors stay) */
-.dark .bg-white { background-color: #1e293b; }
-.dark .bg-slate-50 { background-color: #0f172a; }
-.dark .bg-slate-100 { background-color: #0f172a; }
-.dark .bg-slate-200 { background-color: #1e293b; }
+/* Dark mode — structural overrides */
+.dark .bg-white { background-color: #18181b; }
+.dark .bg-slate-50,
+.dark .bg-zinc-50 { background-color: #09090b; }
+.dark .bg-slate-100,
+.dark .bg-zinc-100 { background-color: #09090b; }
+.dark .bg-slate-200,
+.dark .bg-zinc-200 { background-color: #18181b; }
 
-.dark .text-slate-900 { color: #f8fafc; }
-.dark .text-slate-800 { color: #f1f5f9; }
-.dark .text-slate-700 { color: #e2e8f0; }
-.dark .text-slate-600 { color: #cbd5e1; }
-.dark .text-slate-500 { color: #94a3b8; }
-.dark .text-slate-400 { color: #64748b; }
+.dark .text-slate-900,
+.dark .text-zinc-900 { color: #fafafa; }
+.dark .text-slate-800,
+.dark .text-zinc-800 { color: #f4f4f5; }
+.dark .text-slate-700,
+.dark .text-zinc-700 { color: #e4e4e7; }
+.dark .text-slate-600,
+.dark .text-zinc-600 { color: #a1a1aa; }
+.dark .text-slate-500,
+.dark .text-zinc-500 { color: #71717a; }
+.dark .text-slate-400,
+.dark .text-zinc-400 { color: #52525b; }
 
-.dark .border-slate-200 { border-color: #334155; }
-.dark .border-slate-100 { border-color: #1e293b; }
-.dark .border-slate-300 { border-color: #475569; }
-.dark .border-slate-400 { border-color: #64748b; }
+.dark .border-slate-200,
+.dark .border-zinc-200 { border-color: #27272a; }
+.dark .border-slate-100,
+.dark .border-zinc-100 { border-color: #18181b; }
+.dark .border-slate-300,
+.dark .border-zinc-300 { border-color: #3f3f46; }
 
-/* Form fields render dark in dark mode */
+/* Form fields dark mode */
 .dark input,
 .dark textarea,
 .dark select,
 .dark input::placeholder,
 .dark textarea::placeholder {
-  background-color: #1e293b;
-  color: #e2e8f0;
+  background-color: #18181b;
+  color: #e4e4e7;
 }
 .dark select option {
-  background-color: #1e293b;
-  color: #e2e8f0;
+  background-color: #18181b;
+  color: #e4e4e7;
 }
 
 /* Leaflet dark companion */
-.dark .leaflet-container { background: #0f172a; }
+.dark .leaflet-container { background: #09090b; }
 .dark .leaflet-popup-content-wrapper {
-  background: #1e293b;
-  color: #e2e8f0;
-  border: 1px solid #334155;
+  background: rgba(24, 24, 27, 0.92);
+  color: #e4e4e7;
+  border: 1px solid #27272a;
+  backdrop-filter: blur(12px);
 }
-.dark .leaflet-popup-tip { background: #1e293b; }
+.dark .leaflet-popup-tip { background: rgba(24, 24, 27, 0.92); }
 
 /* Custom scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #f1f5f9; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: #a1a1aa; }
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .animate-fade-in {
-  animation: fadeIn 0.3s ease-out;
+  animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes pulse-ring {
@@ -144,7 +173,52 @@
   100% { transform: scale(2.5); opacity: 0; }
 }
 
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-shimmer {
+  background: linear-gradient(90deg, #f4f4f5 25%, #e4e4e7 50%, #f4f4f5 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+/* Safe area utilities */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.safe-area-pt {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Tabular numbers for data displays */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+}
+
 /* Demo badge */
 .demo-badge {
   @apply inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200;
+}
+
+/* Premium button interaction states */
+.btn-press:active {
+  transform: scale(0.97) translateY(1px);
+}
+.btn-press {
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .animate-fade-in { animation: none; }
+  .animate-shimmer { animation: none; }
+  .animate-pulse { animation: none; }
+  * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }

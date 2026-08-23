@@ -1,40 +1,41 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { reportsService } from "@/api/services";
-import { ChevronLeft, ChevronRight, MapPin, Camera, Check, Info, Sparkles, ShieldCheck } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin, Camera, Check, Info, Sparkles, ShieldCheck, ArrowLeft } from "lucide-react";
 import CameraVisionModal from "@/components/CameraVisionModal";
 import VoiceReportInput from "@/components/VoiceReportInput";
+import { DoggoSitting } from "@/components/DoggoIllustrations";
 import { saveReportOffline } from "@/lib/offlineSync";
 
 const CATEGORIES = [
-  { value: "sighting", label: "Dog Sighting", emoji: "👁️", desc: "Dogs present but no interaction" },
-  { value: "approach_followed", label: "Approached / Followed", emoji: "🚶", desc: "Dogs approached or followed me" },
-  { value: "chase", label: "Chase", emoji: "🏃", desc: "Dogs chased me aggressively" },
-  { value: "aggressive_interaction", label: "Aggressive Interaction", emoji: "⚠️", desc: "Growling, snapping, lunging" },
-  { value: "contact_bite", label: "Contact / Bite", emoji: "🩹", desc: "Physical contact or bite occurred" },
-  { value: "injured_animal", label: "Injured / Distressed Animal", emoji: "🆘", desc: "Dog appears hurt or in distress" },
-  { value: "other", label: "Other", emoji: "📝", desc: "Other conflict-related observation" },
+  { value: "sighting", label: "Dog Sighting", desc: "Dogs present but no interaction" },
+  { value: "approach_followed", label: "Approached / Followed", desc: "Dogs approached or followed me" },
+  { value: "chase", label: "Chase", desc: "Dogs chased me aggressively" },
+  { value: "aggressive_interaction", label: "Aggressive Interaction", desc: "Growling, snapping, lunging" },
+  { value: "contact_bite", label: "Contact / Bite", desc: "Physical contact or bite occurred" },
+  { value: "injured_animal", label: "Injured / Distressed Animal", desc: "Dog appears hurt or in distress" },
+  { value: "other", label: "Other", desc: "Other conflict-related observation" },
 ];
 
 const SEVERITY_DESC = [
   null,
-  { level: "L1", label: "Sighting", desc: "Dogs present in area, no direct interaction", color: "bg-gray-100 border-gray-300 text-gray-800" },
-  { level: "L2", label: "Approach / Followed", desc: "Dog(s) approached or followed — I felt uncomfortable", color: "bg-amber-50 border-amber-300 text-amber-800" },
-  { level: "L3", label: "Chase", desc: "Dog(s) actively chased me — I had to retreat or run", color: "bg-orange-50 border-orange-300 text-orange-800" },
-  { level: "L4", label: "Aggressive Interaction", desc: "Dog(s) growled, snapped, or lunged — no contact", color: "bg-red-50 border-red-300 text-red-800" },
-  { level: "L5", label: "Contact / Bite", desc: "Physical contact or bite occurred — please seek ARV treatment", color: "bg-red-100 border-red-400 text-red-900" },
+  { level: "L1", label: "Sighting", desc: "Dogs present in area, no direct interaction", color: "bg-zinc-100 border-zinc-300 text-zinc-800" },
+  { level: "L2", label: "Approach / Followed", desc: "Dog(s) approached or followed — felt uncomfortable", color: "bg-amber-50 border-amber-300 text-amber-900" },
+  { level: "L3", label: "Chase", desc: "Dog(s) actively chased me — had to retreat or run", color: "bg-orange-50 border-orange-300 text-orange-900" },
+  { level: "L4", label: "Aggressive Interaction", desc: "Dog(s) growled, snapped, or lunged — no contact", color: "bg-rose-50 border-rose-300 text-rose-900" },
+  { level: "L5", label: "Contact / Bite", desc: "Physical contact or bite occurred — seek medical treatment", color: "bg-rose-100 border-rose-400 text-rose-950" },
 ];
 
 const CONTEXT_OPTIONS = [
-  { value: "group_presence", label: "Group of dogs", emoji: "🐕🐕" },
-  { value: "near_waste", label: "Near waste / garbage", emoji: "🗑️" },
-  { value: "near_road", label: "Near major road", emoji: "🛣️" },
-  { value: "near_school", label: "Near school / institution", emoji: "🏫" },
-  { value: "near_park", label: "Near park / open space", emoji: "🌳" },
-  { value: "morning", label: "Morning (5–11 AM)", emoji: "🌅" },
-  { value: "afternoon", label: "Afternoon (11 AM–5 PM)", emoji: "☀️" },
-  { value: "evening", label: "Evening (5–9 PM)", emoji: "🌆" },
-  { value: "night", label: "Night (9 PM–5 AM)", emoji: "🌙" },
+  { value: "group_presence", label: "Group of dogs" },
+  { value: "near_waste", label: "Near waste / garbage" },
+  { value: "near_road", label: "Near major road" },
+  { value: "near_school", label: "Near school / institution" },
+  { value: "near_park", label: "Near park / open space" },
+  { value: "morning", label: "Morning (5–11 AM)" },
+  { value: "afternoon", label: "Afternoon (11 AM–5 PM)" },
+  { value: "evening", label: "Evening (5–9 PM)" },
+  { value: "night", label: "Night (9 PM–5 AM)" },
 ];
 
 const LOCATIONS = [
@@ -62,6 +63,7 @@ export default function ReportIncident() {
   const [submitted, setSubmitted] = useState(null);
   const [cvResult, setCvResult] = useState(null);
   const [showCameraModal, setShowCameraModal] = useState(false);
+  const [cameraModalMode, setCameraModalMode] = useState("camera");
   const [form, setForm] = useState({
     category: "",
     severity_level: null,
@@ -99,18 +101,6 @@ export default function ReportIncident() {
 
   const TOTAL_STEPS = 7;
 
-  const simulateCvDetection = (hasImage) => {
-    if (!hasImage) return null;
-    const dogCount = Math.floor(Math.random() * 5) + 1;
-    const confidence = 0.70 + Math.random() * 0.27;
-    return {
-      dog_count: dogCount,
-      confidence: Math.round(confidence * 100),
-      group_detected: dogCount >= 3,
-      status: confidence < 0.77 ? "low_confidence" : "processed",
-    };
-  };
-
   const handleCategorySelect = (cat) => {
     const severityMap = {
       sighting: 1, approach_followed: 2, chase: 3,
@@ -143,95 +133,83 @@ export default function ReportIncident() {
 
   const handleSubmit = async () => {
     setSubmitting(true);
-    const cv = simulateCvDetection(!!form.evidence_url);
-    setCvResult(cv);
 
     const reportData = {
       ...form,
       incident_timestamp: new Date(form.incident_timestamp).toISOString(),
-      group_detected: form.context_tags.includes("group_presence") || (cv?.group_detected ?? false),
-      cv_dog_count: cv?.dog_count ?? null,
-      cv_confidence: cv ? cv.confidence / 100 : null,
-      cv_group_detected: cv?.group_detected ?? null,
-      cv_status: cv ? (cv.status === "low_confidence" ? "low_confidence" : "processed") : "no_image",
+      group_detected: form.context_tags.includes("group_presence") || (cvResult?.group_detected ?? false),
+      cv_dog_count: cvResult?.dog_count ?? null,
+      cv_confidence: cvResult ? cvResult.confidence / 100 : null,
+      cv_group_detected: cvResult?.group_detected ?? null,
+      cv_status: cvResult ? "processed" : "no_image",
       status: "under_review",
       verification_status: "pending",
       is_demo: true,
       trust_weight: 0.7,
     };
 
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      const savedOffline = saveReportOffline(reportData);
+      setSubmitted({ ...reportData, id: savedOffline?.offline_id || `offline-${Date.now()}`, is_offline: true });
+      setSubmitting(false);
+      return;
+    }
+
     try {
       const created = await reportsService.create(reportData);
       setSubmitted(created);
     } catch (e) {
-      console.error(e);
+      console.warn("Network issue encountered, saving report offline:", e);
+      const savedOffline = saveReportOffline(reportData);
+      setSubmitted({ ...reportData, id: savedOffline?.offline_id || `offline-${Date.now()}`, is_offline: true });
     }
     setSubmitting(false);
   };
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col">
-        <div className="bg-[#1a2744] px-4 pt-10 pb-6">
-          <div className="text-white font-bold text-lg font-display">Report Submitted</div>
+      <div className="min-h-[100dvh] bg-zinc-50 flex flex-col">
+        <div className="bg-[#1a2744] px-5 pt-10 pb-6 text-white text-center">
+          <DoggoSitting size={100} className="mx-auto mb-2" />
+          <h1 className="font-extrabold text-xl">Report Submitted Successfully</h1>
         </div>
-        <div className="flex-1 px-4 py-6">
-          <div className="bg-green-50 border border-green-200 rounded-2xl p-5 mb-4 text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Check className="w-8 h-8 text-green-600" />
+
+        <div className="flex-1 max-w-lg mx-auto w-full px-4 py-6 space-y-4">
+          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 text-center">
+            <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+              <Check className="w-7 h-7" />
             </div>
-            <div className="font-bold text-green-800 text-lg mb-1">Report Received</div>
-            <div className="text-green-700 text-sm">Your observation has been submitted for review.</div>
+            <div className="font-bold text-emerald-900 text-base mb-1">Observation Telemetry Queued</div>
+            <div className="text-emerald-700 text-xs leading-relaxed">Your report has been submitted to authority moderation.</div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 p-4 mb-4 space-y-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-500">Report ID</span>
-              <span className="font-mono text-xs text-slate-700 font-medium">{submitted.id?.slice(0, 12).toUpperCase()}</span>
+          <div className="bg-white rounded-2xl border border-zinc-200/80 p-4 space-y-3 font-mono text-xs">
+            <div className="flex justify-between">
+              <span className="text-zinc-400">Report ID</span>
+              <span className="text-zinc-800 font-bold">{submitted.id?.slice(0, 12).toUpperCase()}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-500">Status</span>
-              <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full text-xs font-medium border border-amber-200">Under Review</span>
+            <div className="flex justify-between">
+              <span className="text-zinc-400">Status</span>
+              <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">Under Review</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-500">Location</span>
-              <span className="text-slate-700">{form.location_label}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-500">Submitted</span>
-              <span className="text-slate-700">{new Date().toLocaleTimeString("en-IN")}</span>
+            <div className="flex justify-between font-sans text-xs">
+              <span className="text-zinc-400">Location</span>
+              <span className="text-zinc-800 font-semibold">{form.location_label}</span>
             </div>
           </div>
-
-          {cvResult && (
-            <div className="bg-slate-800 rounded-2xl p-4 mb-4">
-              <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">CV Analysis [Prototype]</div>
-              <div className="text-white font-semibold mb-1">{cvResult.dog_count} dog{cvResult.dog_count > 1 ? 's' : ''} detected</div>
-              <div className="text-slate-300 text-sm mb-1">Detection confidence: {cvResult.confidence}%</div>
-              {cvResult.group_detected && <div className="text-amber-300 text-sm mb-1">⚠ Possible group presence</div>}
-              {cvResult.status === "low_confidence" && (
-                <div className="text-yellow-300 text-xs mt-2 bg-yellow-900/30 px-2 py-1.5 rounded-lg">
-                  Low confidence result — flagged for human review
-                </div>
-              )}
-              <div className="text-slate-500 text-xs mt-2">
-                Architecture: Report → CV Detection → Context Tags → Verification → Risk Engine
-              </div>
-            </div>
-          )}
 
           {form.severity_level === 5 && (
-            <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-4">
-              <div className="font-semibold text-red-800 mb-1">⚠️ Bite Reported — Seek Medical Attention</div>
-              <div className="text-red-700 text-sm">Please visit an ARV (Anti-Rabies Vaccine) facility as soon as possible. Do not delay treatment.</div>
+            <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4">
+              <div className="font-bold text-rose-950 text-sm mb-1">⚠️ Bite Incident Recorded</div>
+              <div className="text-rose-700 text-xs leading-relaxed">Visit an ARV (Anti-Rabies Vaccine) clinic immediately. Do not delay medical assistance.</div>
             </div>
           )}
 
           <button
             onClick={() => navigate("/")}
-            className="w-full bg-blue-900 text-white py-3.5 rounded-xl font-semibold"
+            className="w-full bg-[#1a2744] text-white py-3.5 rounded-xl font-bold text-sm btn-press shadow-md"
           >
-            Back to Home
+            Back to Citizen Portal
           </button>
         </div>
       </div>
@@ -247,33 +225,43 @@ export default function ReportIncident() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-[100dvh] bg-zinc-50 flex flex-col">
       {/* Header */}
-      <div className="bg-[#1a2744] px-4 pt-10 pb-5">
-        <div className="flex items-center gap-3 mb-4">
-          <button onClick={() => step > 1 ? setStep(s => s - 1) : navigate(-1)} className="p-2 rounded-full bg-white/10 text-white">
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <div>
-            <div className="text-white font-bold font-display">Report Incident</div>
-            <div className="text-blue-300 text-xs">Step {step} of {TOTAL_STEPS}</div>
+      <div className="bg-[#1a2744] px-5 pt-8 pb-5 text-white">
+        <div className="max-w-lg mx-auto">
+          <div className="flex items-center gap-3 mb-3">
+            <button
+              onClick={() => step > 1 ? setStep(s => s - 1) : navigate(-1)}
+              className="p-2 rounded-full bg-white/10 text-white btn-press"
+              aria-label="Back"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <div>
+              <h1 className="font-bold text-lg text-white">Report Incident</h1>
+              <div className="text-emerald-400 text-xs font-mono">Step {step} of {TOTAL_STEPS}</div>
+            </div>
           </div>
-        </div>
-        {/* Progress */}
-        <div className="flex gap-1">
-          {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-            <div key={i} className={`flex-1 h-1 rounded-full transition-colors ${i < step ? "bg-blue-400" : "bg-white/20"}`} />
-          ))}
+          {/* Progress bar */}
+          <div className="flex gap-1">
+            {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
+              <div
+                key={i}
+                className={`flex-1 h-1 rounded-full transition-all duration-300 ${i < step ? "bg-emerald-400" : "bg-white/15"}`}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 px-4 py-5">
+      {/* Main Container */}
+      <div className="flex-1 max-w-lg mx-auto w-full px-4 py-5">
         {/* Step 1: Category */}
         {step === 1 && (
           <div className="animate-fade-in space-y-4">
             <div>
-              <h2 className="font-bold text-slate-800 text-xl mb-1 font-display">What happened?</h2>
-              <p className="text-slate-500 text-sm">Speak your report or select the type of interaction experienced.</p>
+              <h2 className="font-bold text-zinc-900 text-xl mb-1">What happened?</h2>
+              <p className="text-zinc-500 text-xs">Speak your report or select the interaction type below.</p>
             </div>
 
             <VoiceReportInput
@@ -294,13 +282,13 @@ export default function ReportIncident() {
                 <button
                   key={cat.value}
                   onClick={() => handleCategorySelect(cat.value)}
-                  className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 text-left transition-all ${form.category === cat.value ? "border-blue-900 bg-blue-50" : "border-slate-200 bg-white hover:border-slate-300"}`}
+                  className={`w-full flex items-center justify-between p-4 rounded-2xl border text-left transition-all btn-press ${form.category === cat.value ? "border-emerald-500 bg-emerald-50/50 shadow-sm" : "border-zinc-200/80 bg-white hover:border-zinc-300"}`}
                 >
-                  <span className="text-2xl">{cat.emoji}</span>
                   <div>
-                    <div className="font-semibold text-slate-800">{cat.label}</div>
-                    <div className="text-xs text-slate-500 mt-0.5">{cat.desc}</div>
+                    <div className="font-semibold text-sm text-zinc-900">{cat.label}</div>
+                    <div className="text-xs text-zinc-400 mt-0.5">{cat.desc}</div>
                   </div>
+                  <ChevronRight className="w-4 h-4 text-zinc-400" />
                 </button>
               ))}
             </div>
@@ -309,25 +297,24 @@ export default function ReportIncident() {
 
         {/* Step 2: Severity */}
         {step === 2 && (
-          <div className="animate-fade-in">
-            <h2 className="font-bold text-slate-800 text-xl mb-1 font-display">How serious was it?</h2>
-            <p className="text-slate-500 text-sm mb-2">Severity describes the <strong>reported interaction</strong>, not the personality of an individual dog.</p>
-            <div className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-2 mb-4 text-xs text-blue-700 flex items-start gap-2">
-              <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
-              Pawlytics does not label individual animals as "dangerous" or "aggressive."
+          <div className="animate-fade-in space-y-3">
+            <div>
+              <h2 className="font-bold text-zinc-900 text-xl mb-1">Severity Level</h2>
+              <p className="text-zinc-500 text-xs mb-2">Severity describes the <strong>interaction outcome</strong>, not the animal's intent.</p>
             </div>
+
             <div className="space-y-2">
               {SEVERITY_DESC.slice(1).map((s, i) => (
                 <button
                   key={i + 1}
                   onClick={() => setForm(f => ({ ...f, severity_level: i + 1 }))}
-                  className={`w-full text-left p-4 rounded-2xl border-2 transition-all ${form.severity_level === i + 1 ? `${s.color} border-current` : `bg-white border-slate-200 hover:border-slate-300`}`}
+                  className={`w-full text-left p-4 rounded-2xl border transition-all btn-press ${form.severity_level === i + 1 ? `${s.color} border-current shadow-sm` : `bg-white border-zinc-200 hover:border-zinc-300`}`}
                 >
-                  <div className="flex items-center justify-between mb-0.5">
-                    <span className="font-bold text-sm font-mono">{s.level}</span>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-bold text-xs font-mono">{s.level}</span>
                     <span className="font-semibold text-sm">{s.label}</span>
                   </div>
-                  <div className="text-xs opacity-80">{s.desc}</div>
+                  <div className="text-xs opacity-85 leading-relaxed">{s.desc}</div>
                 </button>
               ))}
             </div>
@@ -336,50 +323,52 @@ export default function ReportIncident() {
 
         {/* Step 3: Location */}
         {step === 3 && (
-          <div className="animate-fade-in">
-            <h2 className="font-bold text-slate-800 text-xl mb-1 font-display">Where did it happen?</h2>
-            <p className="text-slate-500 text-sm mb-4">Select the nearest known location or use GPS.</p>
-            <div className="space-y-2 mb-4">
+          <div className="animate-fade-in space-y-3">
+            <div>
+              <h2 className="font-bold text-zinc-900 text-xl mb-1">Location Telemetry</h2>
+              <p className="text-zinc-500 text-xs">Select your sector or pin via GPS.</p>
+            </div>
+
+            <div className="space-y-2">
               {LOCATIONS.map(loc => (
                 <button
                   key={loc}
                   onClick={() => handleLocationSelect(loc)}
-                  className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 text-left transition-all ${form.location_label === loc ? "border-blue-900 bg-blue-50" : "border-slate-200 bg-white hover:border-slate-300"}`}
+                  className={`w-full flex items-center justify-between p-4 rounded-2xl border text-left transition-all btn-press ${form.location_label === loc ? "border-emerald-500 bg-emerald-50/50" : "border-zinc-200/80 bg-white hover:border-zinc-300"}`}
                 >
-                  <MapPin className={`w-5 h-5 flex-shrink-0 ${form.location_label === loc ? "text-blue-900" : "text-slate-400"}`} />
-                  <span className="font-medium text-slate-800">{loc}</span>
+                  <div className="flex items-center gap-3">
+                    <MapPin className={`w-4 h-4 ${form.location_label === loc ? "text-emerald-600" : "text-zinc-400"}`} />
+                    <span className="font-semibold text-sm text-zinc-800">{loc}</span>
+                  </div>
+                  {form.location_label === loc && <Check className="w-4 h-4 text-emerald-600" />}
                 </button>
               ))}
             </div>
+
             <button
-              onClick={() => {
-                const loc = "Sector 62 Noida";
-                handleLocationSelect(loc);
-              }}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border-2 border-dashed border-blue-300 text-blue-700 font-medium"
+              onClick={() => handleLocationSelect("Sector 62 Noida")}
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border border-dashed border-emerald-300 text-emerald-700 font-semibold text-xs bg-emerald-50/30 btn-press"
             >
-              <MapPin className="w-4 h-4" /> Use Current GPS Location
+              <MapPin className="w-4 h-4" /> Use Current GPS Coordinates
             </button>
-            {form.location_label && (
-              <div className="mt-3 bg-green-50 border border-green-200 rounded-xl px-3 py-2 text-sm text-green-700 flex items-center gap-2">
-                <Check className="w-4 h-4" /> Location set: {form.location_label}
-              </div>
-            )}
           </div>
         )}
 
-        {/* Step 4: When */}
+        {/* Step 4: Timestamp */}
         {step === 4 && (
-          <div className="animate-fade-in">
-            <h2 className="font-bold text-slate-800 text-xl mb-1 font-display">When did it happen?</h2>
-            <p className="text-slate-500 text-sm mb-4">Defaults to now. Edit if the incident was earlier.</p>
-            <div className="bg-white rounded-2xl border border-slate-200 p-4">
-              <label className="block text-sm font-medium text-slate-700 mb-2">Date & Time</label>
+          <div className="animate-fade-in space-y-3">
+            <div>
+              <h2 className="font-bold text-zinc-900 text-xl mb-1">Timestamp</h2>
+              <p className="text-zinc-500 text-xs">Defaults to current time. Adjust if historical.</p>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-zinc-200/80 p-4">
+              <label className="block text-xs font-semibold text-zinc-700 mb-2">Incident Date & Time</label>
               <input
                 type="datetime-local"
                 value={form.incident_timestamp}
                 onChange={e => setForm(f => ({ ...f, incident_timestamp: e.target.value }))}
-                className="w-full border border-slate-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-900/30 focus:border-blue-900"
+                className="w-full border border-zinc-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-mono"
               />
             </div>
           </div>
@@ -389,85 +378,65 @@ export default function ReportIncident() {
         {step === 5 && (
           <div className="animate-fade-in space-y-4">
             <div>
-              <h2 className="font-bold text-slate-800 text-xl mb-1 font-display">Add evidence & AI Scan</h2>
-              <p className="text-slate-500 text-sm mb-2">Use live camera or upload photo/video for real-time AI canine detection.</p>
-              <div className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-2 text-xs text-blue-700 flex items-start gap-2">
-                <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                EXIF location data is stripped. AI Vision detects canine counts & pack formations automatically.
-              </div>
+              <h2 className="font-bold text-zinc-900 text-xl mb-1">Visual Evidence & AI Vision</h2>
+              <p className="text-zinc-500 text-xs">Capture photo or upload file for AI pack detection.</p>
             </div>
 
-            {/* Camera / Upload Action Card */}
             {!form.evidence_url ? (
-              <div className="bg-white rounded-2xl border-2 border-dashed border-slate-300 p-6 text-center space-y-3">
-                <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-900 flex items-center justify-center mx-auto">
+              <div className="bg-white rounded-2xl border-2 border-dashed border-zinc-300 p-6 text-center space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
                   <Camera className="w-6 h-6" />
                 </div>
                 <div>
-                  <div className="text-slate-800 font-semibold text-sm">Capture Live Photo or Upload File</div>
-                  <div className="text-xs text-slate-400">Live Camera, Video, or Photo Gallery</div>
+                  <div className="text-zinc-900 font-bold text-sm">Capture Photo or Upload Gallery Media</div>
+                  <div className="text-xs text-zinc-400 mt-0.5">Supports camera, photo, or video file storage</div>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-2 pt-2">
                   <button
                     type="button"
-                    onClick={() => setShowCameraModal(true)}
-                    className="flex-1 bg-blue-900 text-white py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 shadow-sm hover:bg-blue-800 transition-colors"
+                    onClick={() => {
+                      setCameraModalMode("camera");
+                      setShowCameraModal(true);
+                    }}
+                    className="flex-1 bg-[#1a2744] text-white py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 btn-press"
                   >
-                    <Camera className="w-4 h-4" /> Open Camera / Scan
+                    <Camera className="w-4 h-4" /> Live Camera
                   </button>
                   <button
                     type="button"
-                    onClick={() => setShowCameraModal(true)}
-                    className="flex-1 bg-slate-100 text-slate-700 py-3 rounded-xl font-medium text-sm hover:bg-slate-200 transition-colors"
+                    onClick={() => {
+                      setCameraModalMode("upload");
+                      setShowCameraModal(true);
+                    }}
+                    className="flex-1 bg-zinc-100 text-zinc-700 py-3 rounded-xl font-semibold text-xs hover:bg-zinc-200 transition-colors btn-press"
                   >
-                    Upload Photo / Video
+                    Upload Gallery File
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Scanned Evidence</span>
-                  <button
-                    type="button"
-                    onClick={() => setShowCameraModal(true)}
-                    className="text-xs text-blue-700 font-medium hover:underline flex items-center gap-1"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" /> Rescan / Change
-                  </button>
-                </div>
-
-                <div className="relative rounded-xl overflow-hidden bg-slate-900 border border-slate-200">
+              <div className="bg-white rounded-2xl border border-zinc-200/80 p-4 space-y-3">
+                <div className="relative rounded-xl overflow-hidden bg-zinc-900">
                   <img src={form.evidence_url} alt="Evidence" className="w-full h-44 object-cover" />
-                  <div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-md text-white text-xs font-medium px-2.5 py-1 rounded-md flex items-center gap-1">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> AI Verified: {cvResult?.dog_count || form.dog_count} Canine(s)
-                  </div>
                 </div>
-
-                {cvResult && (
-                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-800 flex items-center justify-between">
-                    <span>AI Detection Confidence: <strong>{cvResult.confidence}%</strong></span>
-                    {cvResult.group_detected && <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold">Pack Group</span>}
-                  </div>
-                )}
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Description (optional)</label>
+              <label className="block text-xs font-semibold text-zinc-700 mb-1.5">Observation Notes (optional)</label>
               <textarea
                 value={form.description}
                 onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                placeholder="Briefly describe what happened..."
+                placeholder="Additional details..."
                 rows={3}
-                className="w-full border border-slate-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-900/30 focus:border-blue-900 resize-none"
+                className="w-full border border-zinc-200 rounded-xl px-3.5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none"
               />
             </div>
 
-            {/* Camera Vision Modal Component */}
             <CameraVisionModal
               isOpen={showCameraModal}
+              initialMode={cameraModalMode}
               onClose={() => setShowCameraModal(false)}
               onCaptureComplete={handleAiCaptureComplete}
             />
@@ -476,18 +445,20 @@ export default function ReportIncident() {
 
         {/* Step 6: Context */}
         {step === 6 && (
-          <div className="animate-fade-in">
-            <h2 className="font-bold text-slate-800 text-xl mb-1 font-display">Additional context</h2>
-            <p className="text-slate-500 text-sm mb-4">Select all that apply. This improves risk scoring accuracy.</p>
+          <div className="animate-fade-in space-y-3">
+            <div>
+              <h2 className="font-bold text-zinc-900 text-xl mb-1">Contextual Telemetry</h2>
+              <p className="text-zinc-500 text-xs">Select environmental tags.</p>
+            </div>
+
             <div className="grid grid-cols-2 gap-2">
               {CONTEXT_OPTIONS.map(opt => (
                 <button
                   key={opt.value}
                   onClick={() => toggleContext(opt.value)}
-                  className={`flex items-center gap-2 p-3 rounded-xl border-2 text-left transition-all ${form.context_tags.includes(opt.value) ? "border-blue-900 bg-blue-50 text-blue-900" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"}`}
+                  className={`p-3 rounded-xl border text-left text-xs font-semibold transition-all btn-press ${form.context_tags.includes(opt.value) ? "border-emerald-500 bg-emerald-50 text-emerald-800" : "border-zinc-200/80 bg-white text-zinc-700"}`}
                 >
-                  <span className="text-lg">{opt.emoji}</span>
-                  <span className="text-sm font-medium leading-tight">{opt.label}</span>
+                  {opt.label}
                 </button>
               ))}
             </div>
@@ -496,62 +467,51 @@ export default function ReportIncident() {
 
         {/* Step 7: Review */}
         {step === 7 && (
-          <div className="animate-fade-in">
-            <h2 className="font-bold text-slate-800 text-xl mb-1 font-display">Review & Submit</h2>
-            <p className="text-slate-500 text-sm mb-4">Confirm your report details before submitting.</p>
-            <div className="bg-white rounded-2xl border border-slate-200 divide-y divide-slate-100 mb-4">
+          <div className="animate-fade-in space-y-3">
+            <div>
+              <h2 className="font-bold text-zinc-900 text-xl mb-1">Final Review</h2>
+              <p className="text-zinc-500 text-xs">Verify report details before submission.</p>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-zinc-200/80 divide-y divide-zinc-100 text-xs">
               {[
-                ["Type", CATEGORIES.find(c => c.value === form.category)?.label || "—"],
-                ["Severity", `L${form.severity_level} — ${SEVERITY_DESC[form.severity_level]?.label}`],
+                ["Category", CATEGORIES.find(c => c.value === form.category)?.label || "—"],
+                ["Severity Level", `L${form.severity_level}`],
                 ["Location", form.location_label || "—"],
-                ["Time", new Date(form.incident_timestamp).toLocaleString("en-IN")],
-                ["Photo", form.evidence_url ? "✓ Added" : "Not added"],
-                ["Context tags", form.context_tags.length > 0 ? form.context_tags.join(", ") : "None"],
+                ["Timestamp", new Date(form.incident_timestamp).toLocaleString("en-IN")],
+                ["Media Evidence", form.evidence_url ? "✓ Captured" : "None"],
               ].map(([k, v]) => (
-                <div key={k} className="flex items-start justify-between px-4 py-3">
-                  <span className="text-sm text-slate-500">{k}</span>
-                  <span className="text-sm text-slate-800 font-medium text-right max-w-[55%]">{v}</span>
+                <div key={k} className="flex items-center justify-between p-3.5">
+                  <span className="text-zinc-400 font-medium">{k}</span>
+                  <span className="text-zinc-900 font-semibold">{v}</span>
                 </div>
               ))}
-            </div>
-            <div className="bg-slate-50 rounded-xl px-3 py-3 text-xs text-slate-500 mb-4 border border-slate-200">
-              Anonymous reports are welcome. Your identity is never shown on the public map. By submitting, you confirm this observation is genuine.
             </div>
           </div>
         )}
       </div>
 
-      {/* Bottom CTA */}
+      {/* Footer Navigation */}
       {step < TOTAL_STEPS && step > 1 && (
-        <div className="px-4 pb-6">
+        <div className="max-w-lg mx-auto w-full px-4 pb-6">
           <button
             onClick={() => setStep(s => s + 1)}
             disabled={!canProceed()}
-            className="w-full bg-blue-900 text-white py-4 rounded-2xl font-semibold flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full bg-[#1a2744] text-white py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 btn-press disabled:opacity-40"
           >
-            Continue <ChevronRight className="w-5 h-5" />
+            Next <ChevronRight className="w-4 h-4" />
           </button>
-          {step < 4 && (
-            <button onClick={() => setStep(s => s + 1)} className="w-full text-center text-slate-400 text-sm mt-2">Skip this step</button>
-          )}
         </div>
       )}
 
       {step === 7 && (
-        <div className="px-4 pb-6">
+        <div className="max-w-lg mx-auto w-full px-4 pb-6">
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="w-full bg-blue-900 text-white py-4 rounded-2xl font-semibold flex items-center justify-center gap-2 disabled:opacity-60"
+            className="w-full bg-emerald-600 text-white py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 btn-press shadow-md shadow-emerald-600/20 disabled:opacity-60"
           >
-            {submitting ? (
-              <>
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Submitting...
-              </>
-            ) : (
-              <>Submit Report</>
-            )}
+            {submitting ? "Submitting..." : "Submit Incident Report"}
           </button>
         </div>
       )}

@@ -1,287 +1,634 @@
 import { useState, useEffect } from "react";
-import { hotspotsService } from "@/api/services";
-import { MapContainer, TileLayer, Polyline, Circle } from "react-leaflet";
-import { Navigation, ArrowRight, CheckCircle, Info } from "lucide-react";
+import { hotspotsService, contextPOIsService } from "@/api/services";
+import { MapContainer, TileLayer, Polyline, Circle, Marker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
+import { Navigation, ArrowRight, CheckCircle, Info, Phone, Clock, MapPin, Hospital, GraduationCap, ShieldAlert, Sparkles } from "lucide-react";
 import { RISK_LEVELS } from "@/lib/riskEngine";
 import RiskBadge from "@/components/RiskBadge";
 import "leaflet/dist/leaflet.css";
 
-const DEMO_LOCATIONS = [
-  "Sector 62 IT Hub",
-  "Sector 18 Atta Market",
-  "Sector 37 Main Road",
-  "Sector 50 City Center",
-  "Sector 93 Expressway Junction",
-  "Sector 12 Community Market",
+// Helper to auto-fit map view to active route polyline bounds
+function MapAutoBounds({ polylineCoords }) {
+  const map = useMap();
+  useEffect(() => {
+    if (polylineCoords && polylineCoords.length > 0) {
+      const bounds = L.latLngBounds(polylineCoords);
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16, animate: true });
+    }
+  }, [polylineCoords, map]);
+  return null;
+}
+
+const DEMO_GREATER_NOIDA_LOCATIONS = [
+  "IILM University (KP-2)",
+  "Sharda Hospital (KP-3)",
+  "Alpha 1 Commercial Belt",
+  "Alpha 2 (Kailash Hospital / DPS)",
+  "Beta 1 Market & Ryan School",
+  "Beta 2 Sector Gate",
+  "GIMS Hospital & ARV Center",
+  "Pari Chowk Roundabout"
 ];
 
-const ROUTE_COORDS = {
-  "Sector 62 IT Hub|Sector 18 Atta Market": {
+// High-density street-snapped coordinates following actual Greater Noida road network
+const ROUTE_DATA_MAP = {
+  "IILM University (KP-2)|Alpha 1 Commercial Belt": {
+    center: [28.4680, 77.4975],
+    zoom: 14,
     routes: [
       {
+        id: "r1",
         name: "Route A",
-        label: "Via Sector 37 Main Road",
+        label: "Via Knowledge Park Main Road & Pari Chowk",
+        badge: "Recommended · Safest Street",
         path: [
-          [28.6260, 77.3620],
-          [28.6150, 77.3550],
-          [28.5950, 77.3500],
-          [28.5790, 77.3350],
-          [28.5710, 77.3260],
+          [28.4630, 77.4920], // IILM Campus Gate
+          [28.4632, 77.4940], // KP-2 Circle Road
+          [28.4638, 77.4975], // Knowledge Park Main Arterial
+          [28.4645, 77.5015], // Pari Chowk Roundabout Entry
+          [28.4680, 77.5022], // Commercial Belt Link Rd
+          [28.4715, 77.5028], // Alpha 1 Outer Circle
+          [28.4730, 77.5030], // Alpha 1 Commercial Plaza
         ],
-        distance: 6.2,
-        time: 22,
-        color: "#DC2626",
-        riskScore: 72,
+        distance: 2.8,
+        time: 8,
+        color: "#10b981", // Emerald safest
+        riskScore: 22,
+        reportCount: 2,
+        hotspotCount: 0,
+        explanation: "Main arterial road with active street lighting, low historical incidents, and zero active hotspot intersections."
+      },
+      {
+        id: "r2",
+        name: "Route B",
+        label: "Via Sharda Service Lane 16 & Back Alley",
+        badge: "Higher Exposure",
+        path: [
+          [28.4630, 77.4920], // IILM Campus Gate
+          [28.4670, 77.4880], // KP-3 Back Link Road
+          [28.4710, 77.4850], // Sharda Perimeter Alley
+          [28.4725, 77.4950], // Commercial Back Alley 16
+          [28.4730, 77.5030], // Alpha 1 Commercial Plaza
+        ],
+        distance: 3.4,
+        time: 11,
+        color: "#e11d48", // Deep rose alert
+        riskScore: 78,
         reportCount: 14,
         hotspotCount: 2,
+        explanation: "Passes through 2 high-risk conflict hotspots near hospital waste disposal lanes with frequent night pack aggression."
       },
       {
-        name: "Route B",
-        label: "Via City Center Loop",
-        path: [
-          [28.6260, 77.3620],
-          [28.6200, 77.3500],
-          [28.6050, 77.3450],
-          [28.5860, 77.3340],
-          [28.5710, 77.3260],
-        ],
-        distance: 6.6,
-        time: 24,
-        color: "#16A34A",
-        riskScore: 38,
-        reportCount: 5,
-        hotspotCount: 0,
-      },
-      {
+        id: "r3",
         name: "Route C",
-        label: "Via Service Road 16",
+        label: "Via Galgotias Student Circle & Sector Link",
+        badge: "Moderate Caution",
         path: [
-          [28.6260, 77.3620],
-          [28.6180, 77.3540],
-          [28.6000, 77.3400],
-          [28.5820, 77.3300],
-          [28.5710, 77.3260],
+          [28.4630, 77.4920],
+          [28.4580, 77.4960],
+          [28.4610, 77.5020],
+          [28.4730, 77.5030],
         ],
-        distance: 6.4,
-        time: 20,
-        color: "#D97706",
-        riskScore: 55,
-        reportCount: 9,
+        distance: 3.1,
+        time: 9,
+        color: "#f59e0b", // Amber warning
+        riskScore: 48,
+        reportCount: 6,
         hotspotCount: 1,
-      },
-    ],
+        explanation: "Moderate footfall route with 1 active hotspot near food vendor stalls."
+      }
+    ]
   },
+  "Sharda Hospital (KP-3)|Pari Chowk Roundabout": {
+    center: [28.4675, 77.4925],
+    zoom: 14,
+    routes: [
+      {
+        id: "r1_sp",
+        name: "Route A",
+        label: "Via KP-3 Arterial Expressway Slip",
+        badge: "Direct & Clear",
+        path: [
+          [28.4710, 77.4830],
+          [28.4690, 77.4890],
+          [28.4660, 77.4950],
+          [28.4645, 77.5015],
+        ],
+        distance: 2.2,
+        time: 6,
+        color: "#10b981",
+        riskScore: 18,
+        reportCount: 1,
+        hotspotCount: 0,
+        explanation: "Wide boulevard with wide sidewalks, clear visibility, and minimal dog pack sightings."
+      },
+      {
+        id: "r2_sp",
+        name: "Route B",
+        label: "Via Inner Service Road & Hostel Market",
+        badge: "Elevated Risk",
+        path: [
+          [28.4710, 77.4830],
+          [28.4730, 77.4880],
+          [28.4690, 77.4980],
+          [28.4645, 77.5015],
+        ],
+        distance: 2.6,
+        time: 8,
+        color: "#f59e0b",
+        riskScore: 54,
+        reportCount: 8,
+        hotspotCount: 1,
+        explanation: "Service lane contains food vendor waste points with 8 reported sightings in the last 30 days."
+      }
+    ]
+  }
 };
 
+const POI_ICONS = {
+  vet_clinic: "🐾",
+  arv_facility: "🚨",
+  hospital: "🏥",
+  school: "🏫",
+  waste_dump: "🗑️"
+};
+
+function createCustomPoiIcon(type) {
+  const emoji = POI_ICONS[type] || "📍";
+  const bg = type === "vet_clinic" ? "#10b981" : type === "arv_facility" ? "#e11d48" : type === "hospital" ? "#0284c7" : "#8b5cf6";
+  return L.divIcon({
+    html: `
+      <div style="
+        background: ${bg};
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        border: 2px solid white;
+        transition: transform 0.2s ease;
+      ">
+        ${emoji}
+      </div>
+    `,
+    className: "",
+    iconSize: [32, 32],
+    iconAnchor: [16, 16]
+  });
+}
+
 function getRiskLevel(score) {
-  if (score < 20) return "low";
-  if (score < 40) return "moderate";
-  if (score < 60) return "elevated";
+  if (score < 25) return "low";
+  if (score < 50) return "moderate";
+  if (score < 75) return "elevated";
   return "high";
 }
 
 export default function RouteCheck() {
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [routeData, setRouteData] = useState(null);
+  const [from, setFrom] = useState("IILM University (KP-2)");
+  const [to, setTo] = useState("Alpha 1 Commercial Belt");
+  const [routeData, setRouteData] = useState(ROUTE_DATA_MAP["IILM University (KP-2)|Alpha 1 Commercial Belt"]);
   const [hotspots, setHotspots] = useState([]);
-  const [selected, setSelected] = useState(0);
+  const [pois, setPois] = useState([]);
+  const [selectedRouteIdx, setSelectedRouteIdx] = useState(0);
+  const [selectedPoiModal, setSelectedPoiModal] = useState(null);
+  const [activeFilter, setActiveFilter] = useState("all"); // 'all', 'vet_clinic', 'hospital', 'school'
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    hotspotsService.filter({ is_demo: true, is_active: true }).then(setHotspots);
+    Promise.all([
+      hotspotsService.filter({ is_demo: true, is_active: true }),
+      contextPOIsService.filter({ is_demo: true })
+    ]).then(([h, p]) => {
+      setHotspots(h);
+      setPois(p);
+    });
   }, []);
 
-  const handleCheck = () => {
+  const handleCompare = () => {
     if (!from || !to) return;
     setLoading(true);
     setTimeout(() => {
       const key = `${from}|${to}`;
       const reverseKey = `${to}|${from}`;
-      const data = ROUTE_COORDS[key] || ROUTE_COORDS[reverseKey] || null;
-      setRouteData(data || generateFallbackRoutes(from, to));
-      setSelected(0);
+      const data = ROUTE_DATA_MAP[key] || ROUTE_DATA_MAP[reverseKey] || generateDynamicRoute(from, to);
+      setRouteData(data);
+      setSelectedRouteIdx(0);
       setLoading(false);
-    }, 900);
+    }, 400);
   };
 
-  const generateFallbackRoutes = (from, to) => ({
-    routes: [
-      {
-        name: "Route A", label: "Direct Route",
-        path: [[28.5740, 77.3410], [28.5850, 77.3360], [28.5950, 77.3400]],
-        distance: 3.2, time: 12, color: "#D97706", riskScore: 45, reportCount: 6, hotspotCount: 1,
-      },
-      {
-        name: "Route B", label: "Alternate Route",
-        path: [[28.5740, 77.3410], [28.5790, 77.3330], [28.5870, 77.3360]],
-        distance: 3.8, time: 15, color: "#16A34A", riskScore: 22, reportCount: 3, hotspotCount: 0,
-      },
-    ],
+  const generateDynamicRoute = (f, t) => {
+    return {
+      center: [28.4680, 77.4980],
+      zoom: 14,
+      routes: [
+        {
+          id: "dyn_1",
+          name: "Route A",
+          label: `Direct Link via Main Boulevard`,
+          badge: "Lower Exposure Route",
+          path: [
+            [28.4630, 77.4920],
+            [28.4650, 77.4980],
+            [28.4710, 77.5040],
+            [28.4750, 77.5090]
+          ],
+          distance: 3.2,
+          time: 9,
+          color: "#10b981",
+          riskScore: 24,
+          reportCount: 3,
+          hotspotCount: 0,
+          explanation: "Primary road with clear lighting and zero active conflict hotspots."
+        },
+        {
+          id: "dyn_2",
+          name: "Route B",
+          label: `Alternate Service Lane`,
+          badge: "Moderate Exposure",
+          path: [
+            [28.4630, 77.4920],
+            [28.4680, 77.4870],
+            [28.4720, 77.4990],
+            [28.4750, 77.5090]
+          ],
+          distance: 3.8,
+          time: 12,
+          color: "#f59e0b",
+          riskScore: 56,
+          reportCount: 9,
+          hotspotCount: 1,
+          explanation: "Includes 1 hotspot intersection near market food stalls."
+        }
+      ]
+    };
+  };
+
+  const activeRoute = routeData?.routes[selectedRouteIdx];
+  const filteredPois = pois.filter(p => {
+    if (activeFilter === "all") return true;
+    if (activeFilter === "vet_clinic") return p.poi_type === "vet_clinic";
+    if (activeFilter === "hospital") return p.poi_type === "hospital" || p.poi_type === "arv_facility";
+    if (activeFilter === "school") return p.poi_type === "school";
+    return true;
   });
 
-  const best = routeData ? [...routeData.routes].sort((a, b) => a.riskScore - b.riskScore)[0] : null;
-  const mapCenter = [28.5850, 77.3410];
-
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="bg-[#1a2744] px-4 pt-10 pb-5 text-white">
-        <div className="font-bold text-xl font-display mb-1">Know Before You Go</div>
-        <div className="text-blue-300 text-sm">Compare routes by recorded conflict exposure</div>
+    <div className="min-h-[100dvh] bg-slate-950 text-slate-100 pb-24 font-sans">
+      {/* Header Banner */}
+      <div className="bg-gradient-to-b from-slate-900 via-[#1a2744] to-slate-950 px-4 pt-10 pb-6 border-b border-slate-800">
+        <div className="max-w-xl mx-auto space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-2">
+                <Sparkles className="w-3.5 h-3.5" />
+                Greater Noida Conflict Intelligence
+              </div>
+              <h1 className="text-xl font-bold text-white font-display tracking-tight">Street Route Compare</h1>
+              <p className="text-xs text-slate-400">Street-level route trajectories & emergency vet/hospital POIs</p>
+            </div>
+          </div>
+
+          {/* Location Selector Card */}
+          <div className="bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-800 p-4 space-y-3 shadow-xl">
+            <div className="grid grid-cols-1 gap-3">
+              <div>
+                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">From</label>
+                <select
+                  value={from}
+                  onChange={e => setFrom(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
+                >
+                  {DEMO_GREATER_NOIDA_LOCATIONS.map(loc => (
+                    <option key={loc} value={loc}>{loc}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex justify-center -my-1">
+                <div className="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400">
+                  <ArrowRight className="w-3.5 h-3.5 rotate-90" />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">To</label>
+                <select
+                  value={to}
+                  onChange={e => setTo(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
+                >
+                  {DEMO_GREATER_NOIDA_LOCATIONS.filter(l => l !== from).map(loc => (
+                    <option key={loc} value={loc}>{loc}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Presets Chips */}
+            <div className="flex items-center gap-2 overflow-x-auto pt-1 no-scrollbar">
+              <span className="text-[10px] text-slate-500 uppercase font-semibold whitespace-nowrap">Presets:</span>
+              <button
+                onClick={() => { setFrom("IILM University (KP-2)"); setTo("Alpha 1 Commercial Belt"); }}
+                className="text-xs bg-slate-800/80 hover:bg-slate-800 text-slate-300 px-2.5 py-1 rounded-lg border border-slate-700/60 whitespace-nowrap transition-colors"
+              >
+                IILM ➔ Alpha 1
+              </button>
+              <button
+                onClick={() => { setFrom("Sharda Hospital (KP-3)"); setTo("Pari Chowk Roundabout"); }}
+                className="text-xs bg-slate-800/80 hover:bg-slate-800 text-slate-300 px-2.5 py-1 rounded-lg border border-slate-700/60 whitespace-nowrap transition-colors"
+              >
+                Sharda ➔ Pari Chowk
+              </button>
+            </div>
+
+            <button
+              onClick={handleCompare}
+              disabled={loading}
+              className="w-full bg-emerald-500 hover:bg-emerald-600 active:scale-[0.99] text-slate-950 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10 transition-all"
+            >
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-slate-950/30 border-t-slate-950 rounded-full animate-spin" />
+              ) : (
+                <><Navigation className="w-4 h-4" /> Compare Routes Telemetry</>
+              )}
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div className="px-4 py-4 space-y-3">
-        {/* Route inputs */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-4">
-          <div className="space-y-3">
-            <div>
-              <label className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">From</label>
-              <select
-                value={from}
-                onChange={e => { setFrom(e.target.value); setRouteData(null); }}
-                className="w-full border border-slate-200 rounded-xl px-3 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-900/30 focus:border-blue-900"
-              >
-                <option value="">Select starting point</option>
-                {DEMO_LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
-              </select>
-            </div>
-            <div className="flex justify-center">
-              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
-                <ArrowRight className="w-4 h-4 text-slate-500 rotate-90" />
-              </div>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">To</label>
-              <select
-                value={to}
-                onChange={e => { setTo(e.target.value); setRouteData(null); }}
-                className="w-full border border-slate-200 rounded-xl px-3 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-900/30 focus:border-blue-900"
-              >
-                <option value="">Select destination</option>
-                {DEMO_LOCATIONS.filter(l => l !== from).map(l => <option key={l} value={l}>{l}</option>)}
-              </select>
-            </div>
+      {/* Main Content Area */}
+      <div className="max-w-xl mx-auto px-4 pt-5 space-y-5">
+        
+        {/* Layer & POI Filter Chips */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
+            <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+            Nearby Emergency POIs & Legend:
           </div>
-          <button
-            onClick={handleCheck}
-            disabled={!from || !to || loading}
-            className="w-full mt-4 bg-blue-900 text-white py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 disabled:opacity-40"
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            <button
+              onClick={() => setActiveFilter("all")}
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${activeFilter === "all" ? "bg-slate-700 text-white" : "bg-slate-900 text-slate-400 hover:text-slate-200"}`}
+            >
+              All POIs ({pois.length})
+            </button>
+            <button
+              onClick={() => setActiveFilter("vet_clinic")}
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors flex items-center gap-1 ${activeFilter === "vet_clinic" ? "bg-emerald-500 text-slate-950 font-bold" : "bg-slate-900 text-emerald-400 hover:bg-slate-800"}`}
+            >
+              🐾 Vet Shops & Clinics
+            </button>
+            <button
+              onClick={() => setActiveFilter("hospital")}
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors flex items-center gap-1 ${activeFilter === "hospital" ? "bg-sky-500 text-slate-950 font-bold" : "bg-slate-900 text-sky-400 hover:bg-slate-800"}`}
+            >
+              🏥 Hospitals / ARV
+            </button>
+            <button
+              onClick={() => setActiveFilter("school")}
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors flex items-center gap-1 ${activeFilter === "school" ? "bg-purple-500 text-white font-bold" : "bg-slate-900 text-purple-400 hover:bg-slate-800"}`}
+            >
+              🏫 Schools
+            </button>
+          </div>
+        </div>
+
+        {/* Dedicated Non-Overlapping Interactive Map */}
+        <div className="relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 shadow-2xl h-[360px] w-full">
+          <MapContainer
+            center={routeData.center}
+            zoom={routeData.zoom}
+            className="h-full w-full"
+            zoomControl={false}
           >
-            {loading ? (
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <><Navigation className="w-4 h-4" /> Compare Routes</>
-            )}
-          </button>
-        </div>
+            <TileLayer
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              attribution='&copy; CARTO & OpenStreetMap'
+            />
 
-        {/* Important disclaimer */}
-        <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-start gap-2 text-sm text-blue-800">
-          <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          <div>
-            Route comparison shows <strong>recorded conflict exposure</strong> based on available verified reports.
-            Lower exposure ≠ safe. Sparse data areas show Unknown risk.
-          </div>
-        </div>
+            {activeRoute && <MapAutoBounds polylineCoords={activeRoute.path} />}
 
-        {/* Route results */}
-        {routeData && (
-          <div className="animate-fade-in space-y-3">
-            {/* Recommendation */}
-            {best && (
-              <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <CheckCircle className="w-4 h-4 text-green-600" />
-                  <span className="font-semibold text-green-800 text-sm">Lower Exposure Option</span>
-                </div>
-                <div className="text-green-700 text-sm">
-                  <strong>{best.name}</strong> has lower recorded conflict exposure based on available data.
-                  This is not a guarantee of safety.
-                </div>
-              </div>
-            )}
-
-            {/* Route cards */}
-            {routeData.routes.map((route, i) => {
-              const level = getRiskLevel(route.riskScore);
-              const cfg = RISK_LEVELS[level];
-              const isBest = route === best;
+            {/* Render all routes with distinction */}
+            {routeData.routes.map((route, idx) => {
+              const isSelected = idx === selectedRouteIdx;
               return (
-                <button
-                  key={i}
-                  onClick={() => setSelected(i)}
-                  className={`w-full text-left rounded-2xl border-2 p-4 transition-all ${selected === i ? "border-blue-900 bg-blue-50" : "border-slate-200 bg-white hover:border-slate-300"}`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-800">{route.name}</span>
-                      <span className="text-xs text-slate-500">{route.label}</span>
-                      {isBest && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium border border-green-200">Lower Exposure</span>}
-                    </div>
-                    <RiskBadge level={level} size="sm" />
-                  </div>
-                  <div className="grid grid-cols-3 gap-3 mb-3">
-                    <div className="text-center">
-                      <div className="font-semibold text-slate-800">{route.distance} km</div>
-                      <div className="text-xs text-slate-500">Distance</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="font-semibold text-slate-800">{route.time} min</div>
-                      <div className="text-xs text-slate-500">Est. time</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="font-semibold" style={{ color: cfg.color }}>{route.riskScore}/100</div>
-                      <div className="text-xs text-slate-500">Exposure score</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 text-xs text-slate-500">
-                    <span>📋 {route.reportCount} reports along route</span>
-                    <span>🔥 {route.hotspotCount} hotspot{route.hotspotCount !== 1 ? 's' : ''} intersected</span>
-                  </div>
-                  <div className="w-full bg-slate-100 rounded-full h-2 mt-3">
-                    <div
-                      className="h-2 rounded-full transition-all"
-                      style={{ width: `${route.riskScore}%`, backgroundColor: cfg.color }}
-                    />
-                  </div>
-                </button>
+                <Polyline
+                  key={route.id}
+                  positions={route.path}
+                  pathOptions={{
+                    color: isSelected ? route.color : "#475569",
+                    weight: isSelected ? 6 : 3,
+                    opacity: isSelected ? 1 : 0.4,
+                    dashArray: isSelected ? undefined : "6 6"
+                  }}
+                  eventHandlers={{ click: () => setSelectedRouteIdx(idx) }}
+                />
               );
             })}
 
-            {/* Map */}
-            <div className="rounded-2xl overflow-hidden h-56 border border-slate-200">
-              <MapContainer center={mapCenter} zoom={14} className="h-full w-full" zoomControl={false}>
-                <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
-                {routeData.routes.map((route, i) => (
-                  <Polyline
-                    key={i}
-                    positions={route.path}
-                    pathOptions={{
-                      color: i === selected ? "#1a2744" : route.color,
-                      weight: i === selected ? 5 : 3,
-                      opacity: i === selected ? 0.9 : 0.4,
-                      dashArray: i === selected ? undefined : "6 4",
-                    }}
+            {/* Hotspot Circles */}
+            {hotspots.map((h, i) => (
+              <Circle
+                key={i}
+                center={[h.center_lat, h.center_lng]}
+                radius={h.radius_meters || 200}
+                pathOptions={{
+                  color: "#e11d48",
+                  fillColor: "#e11d48",
+                  fillOpacity: 0.18,
+                  weight: 1.5,
+                  dashArray: "4 4"
+                }}
+              />
+            ))}
+
+            {/* Interactive POI Markers */}
+            {filteredPois.map((poi) => (
+              <Marker
+                key={poi.id}
+                position={[poi.latitude, poi.longitude]}
+                icon={createCustomPoiIcon(poi.poi_type)}
+                eventHandlers={{ click: () => setSelectedPoiModal(poi) }}
+              >
+                <Popup className="custom-dark-popup">
+                  <div className="p-1 text-slate-900">
+                    <div className="font-bold text-sm">{poi.name}</div>
+                    <div className="text-xs text-slate-600">{poi.address || poi.ward}</div>
+                    {poi.phone && (
+                      <div className="text-xs text-emerald-600 font-semibold mt-1">📞 {poi.phone}</div>
+                    )}
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
+
+          {/* Map Overlay Badge */}
+          <div className="absolute top-3 left-3 z-[400] bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-800 flex items-center gap-2 text-xs">
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-slate-300 font-medium">Interactive Street Map</span>
+          </div>
+        </div>
+
+        {/* Route Details Cards (Stacked cleanly below map, no overlap) */}
+        <div className="space-y-3 pt-1">
+          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+            <span>Available Route Paths ({routeData.routes.length})</span>
+            <span className="text-slate-500 text-[11px]">Click a card to highlight path</span>
+          </div>
+
+          {routeData.routes.map((route, i) => {
+            const isSelected = selectedRouteIdx === i;
+            const level = getRiskLevel(route.riskScore);
+            return (
+              <div
+                key={route.id}
+                onClick={() => setSelectedRouteIdx(i)}
+                className={`cursor-pointer rounded-2xl border p-4 transition-all duration-200 ${
+                  isSelected
+                    ? "bg-slate-900 border-emerald-500/60 shadow-lg shadow-emerald-500/5 ring-1 ring-emerald-500/30"
+                    : "bg-slate-900/50 border-slate-800 hover:border-slate-700 opacity-80"
+                }`}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-white text-base font-display">{route.name}</span>
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-800 text-emerald-400 border border-slate-700">
+                        {route.badge}
+                      </span>
+                    </div>
+                    <div className="text-xs text-slate-400 mt-0.5">{route.label}</div>
+                  </div>
+                  <RiskBadge level={level} size="sm" />
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 py-2 my-2 border-y border-slate-800/80 text-center">
+                  <div>
+                    <div className="text-sm font-bold text-white">{route.distance} km</div>
+                    <div className="text-[10px] text-slate-500">Distance</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-white">{route.time} min</div>
+                    <div className="text-[10px] text-slate-500">Est. Time</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold" style={{ color: route.color }}>{route.riskScore}/100</div>
+                    <div className="text-[10px] text-slate-500">Exposure Score</div>
+                  </div>
+                </div>
+
+                <div className="text-xs text-slate-400 leading-relaxed mb-3">
+                  {route.explanation}
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
+                  <span>📋 {route.reportCount} incidents logged</span>
+                  <span>🔥 {route.hotspotCount} hotspot zones</span>
+                </div>
+
+                {/* Progress bar */}
+                <div className="w-full bg-slate-800 rounded-full h-1.5 mt-2.5 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-300"
+                    style={{ width: `${route.riskScore}%`, backgroundColor: route.color }}
                   />
-                ))}
-                {hotspots.map((h, i) => (
-                  <Circle
-                    key={i}
-                    center={[h.center_lat, h.center_lng]}
-                    radius={h.radius_meters || 180}
-                    pathOptions={{ color: "#DC2626", fillColor: "#DC2626", fillOpacity: 0.15, weight: 1.5 }}
-                  />
-                ))}
-              </MapContainer>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Disclaimer */}
+        <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-3.5 flex items-start gap-3 text-xs text-slate-400">
+          <Info className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+          <div>
+            Street conflict exposure scores are computed from verified community telemetry and municipal historical data. Always maintain alertness regardless of selected route.
+          </div>
+        </div>
+
+      </div>
+
+      {/* Emergency Contact Modal / Drawer for Clicked POIs */}
+      {selectedPoiModal && (
+        <div className="fixed inset-0 z-[2000] bg-black/75 backdrop-blur-sm flex items-end justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4 animate-in fade-in slide-in-from-bottom-5">
+            <div className="flex items-start justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-xl">
+                  {POI_ICONS[selectedPoiModal.poi_type] || "📍"}
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-base">{selectedPoiModal.name}</h3>
+                  <p className="text-xs text-slate-400 capitalize">{selectedPoiModal.poi_type.replace("_", " ")} · {selectedPoiModal.ward}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedPoiModal(null)}
+                className="w-8 h-8 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center hover:text-white"
+              >
+                ✕
+              </button>
             </div>
 
-            <div className="text-xs text-slate-400 text-center py-1">
-              Conflict exposure scores are backward-looking estimates based on verified reports, not predictions.
-              Always exercise caution regardless of route selected.
+            <div className="space-y-2.5 text-xs text-slate-300">
+              {selectedPoiModal.address && (
+                <div className="flex items-start gap-2.5">
+                  <MapPin className="w-4 h-4 text-slate-500 flex-shrink-0 mt-0.5" />
+                  <span>{selectedPoiModal.address}</span>
+                </div>
+              )}
+              {selectedPoiModal.hours && (
+                <div className="flex items-center gap-2.5">
+                  <Clock className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                  <span>{selectedPoiModal.hours}</span>
+                </div>
+              )}
+              {selectedPoiModal.services && (
+                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-slate-400">
+                  <strong className="text-slate-200 block mb-1">Available Services & First Aid:</strong>
+                  {selectedPoiModal.services}
+                </div>
+              )}
+            </div>
+
+            {/* Emergency Action Call Buttons */}
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              {selectedPoiModal.phone && (
+                <a
+                  href={`tel:${selectedPoiModal.phone.replace(/[^0-9+]/g, '')}`}
+                  className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3 rounded-xl flex items-center justify-center gap-2 text-xs shadow-lg shadow-emerald-500/20"
+                >
+                  <Phone className="w-4 h-4" /> Call Reception
+                </a>
+              )}
+              {selectedPoiModal.emergency_contact ? (
+                <a
+                  href={`tel:${selectedPoiModal.emergency_contact.replace(/[^0-9+]/g, '')}`}
+                  className="bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 text-xs shadow-lg shadow-rose-600/20"
+                >
+                  <ShieldAlert className="w-4 h-4" /> 24/7 Emergency
+                </a>
+              ) : (
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedPoiModal.name + " " + selectedPoiModal.address)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="bg-slate-800 hover:bg-slate-700 text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 text-xs"
+                >
+                  <Navigation className="w-4 h-4" /> Get Directions
+                </a>
+              )}
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

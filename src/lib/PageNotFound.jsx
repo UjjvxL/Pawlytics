@@ -1,6 +1,7 @@
 import { useLocation } from 'react-router-dom';
 import { authService } from "@/api/services";
 import { useQuery } from '@tanstack/react-query';
+import { DoggoSitting } from "@/components/DoggoIllustrations";
 
 
 export default function PageNotFound({}) {
@@ -20,13 +21,17 @@ export default function PageNotFound({}) {
     });
     
     return (
-        <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50">
+        <div className="min-h-[100dvh] flex items-center justify-center p-6 bg-zinc-50">
             <div className="max-w-md w-full">
                 <div className="text-center space-y-6">
+                    {/* Doggo illustration */}
+                    <div className="flex justify-center">
+                        <DoggoSitting size={140} />
+                    </div>
+                    
                     {/* 404 Error Code */}
                     <div className="space-y-2">
-                        <h1 className="text-7xl font-light text-slate-300">404</h1>
-                        <div className="h-0.5 w-16 bg-slate-200 mx-auto"></div>
+                        <h1 className="text-6xl font-bold tracking-tighter text-zinc-200">404</h1>
                     </div>
                     
                     {/* Main Message */}

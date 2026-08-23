@@ -1,0 +1,31 @@
+{
+  "packageId": "com.pawlytics.app",
+  "host": "localhost",
+  "name": "Pawlytics",
+  "launcherName": "Pawlytics",
+  "display": "standalone",
+  "themeColor": "#1A2744",
+  "navigationColor": "#1A2744",
+  "backgroundColor": "#09090B",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://raw.githubusercontent.com/pwabuilder/manifest/main/icon.png",
+  "maskableIconUrl": "https://raw.githubusercontent.com/pwabuilder/manifest/main/icon.png",
+  "appVersion": "1.0.0",
+  "appVersionCode": 1,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "android"
+  },
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://raw.githubusercontent.com/pwabuilder/manifest/main/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "orientation": "default"
+}

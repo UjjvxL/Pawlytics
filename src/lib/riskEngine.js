@@ -1,6 +1,6 @@
 // Pawlytics Risk Engine
 // Explainable, time-decayed composite risk scoring
-// IMPORTANT: This is decision-support, NOT prediction of individual animal behavior
+// Decision-support and risk intelligence model
 
 export const RISK_LEVELS = {
   unknown: { label: "Unknown Risk", color: "#6B7280", bg: "bg-gray-100", text: "text-gray-600", border: "border-gray-300", badge: "bg-gray-100 text-gray-700" },
@@ -12,7 +12,7 @@ export const RISK_LEVELS = {
 };
 
 export const CONFIDENCE_LEVELS = {
-  insufficient: { label: "Insufficient data", description: "0–2 verified reports", color: "#9CA3AF" },
+  insufficient: { label: "Sparse telemetry", description: "1–2 verified reports", color: "#9CA3AF" },
   low: { label: "Low confidence", description: "3–9 verified reports", color: "#D97706" },
   moderate: { label: "Moderate confidence", description: "10–29 verified reports", color: "#2563EB" },
   high: { label: "High confidence", description: "30+ verified reports", color: "#16A34A" },
@@ -47,8 +47,8 @@ export function getRiskLevelFromScore(score) {
   if (score === null || score === undefined) return "unknown";
   if (score < 20) return "low";
   if (score < 40) return "moderate";
-  if (score < 60) return "elevated";
-  if (score < 80) return "high";
+  if (score < 70) return "elevated";
+  if (score < 88) return "high";
   return "very_high";
 }
 
@@ -57,47 +57,43 @@ export function calculateRiskScore(reports) {
   
   const now = Date.now();
   const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
-  
-  // Time decay: reports in last 30 days weighted more
   let weightedScore = 0;
   const explanationFactors = [];
   
   const recentReports = reports.filter(r => {
-    const ts = new Date(r.incident_timestamp || r.created_date).getTime();
+    const ts = new Date(r.incident_timestamp || r.created_date || Date.now()).getTime();
     return (now - ts) < THIRTY_DAYS;
   });
   
-  const verifiedCount = recentReports.filter(r => {
+  const verifiedReports = recentReports.filter(r => {
     const isVerified = r.verification_status === "verified" || r.status === "verified";
     const isNotRejected = r.cv_uncertainty !== "REJECTED";
     return isVerified && isNotRejected;
-  }).length;
+  });
+
+  const verifiedCount = verifiedReports.length;
 
   // Base: verified report count weighted by CV Uncertainty Tier
   let reportScoreSum = 0;
-  recentReports.forEach((r) => {
-    const isVerified = r.verification_status === "verified" || r.status === "verified";
-    if (!isVerified) return;
-
-    // Uncertainty weighting: prevent unverified low-confidence CV from inflating risk
+  verifiedReports.forEach((r) => {
     const cvWeight =
       r.cv_uncertainty === "CONFIRMED" ? 1.0 :
       r.cv_uncertainty === "PROBABLE"  ? 0.75 :
       r.cv_uncertainty === "UNCERTAIN" ? 0.30 : 0.0;
 
-    reportScoreSum += 3 * cvWeight;
+    reportScoreSum += 5 * cvWeight;
   });
 
-  const reportScore = Math.min(30, reportScoreSum);
+  const reportScore = Math.min(25, reportScoreSum);
   weightedScore += reportScore;
   if (verifiedCount > 0) explanationFactors.push(`${verifiedCount} verified report${verifiedCount > 1 ? 's' : ''} in the last 30 days`);
   
-  // Severity distribution (max 25 pts)
-  const biteCount = recentReports.filter(r => r.severity_level >= 5).length;
-  const aggressiveCount = recentReports.filter(r => r.severity_level === 4).length;
-  const chaseCount = recentReports.filter(r => r.severity_level === 3).length;
+  // Severity distribution (max 30 pts)
+  const biteCount = verifiedReports.filter(r => r.severity_level >= 5).length;
+  const aggressiveCount = verifiedReports.filter(r => r.severity_level === 4).length;
+  const chaseCount = verifiedReports.filter(r => r.severity_level === 3).length;
   
-  const severityScore = Math.min(25, (biteCount * 8) + (aggressiveCount * 5) + (chaseCount * 3));
+  const severityScore = Math.min(30, (biteCount * 10) + (aggressiveCount * 7) + (chaseCount * 4));
   weightedScore += severityScore;
   
   if (biteCount > 0) explanationFactors.push(`${biteCount} contact/bite report${biteCount > 1 ? 's' : ''}`);
@@ -105,7 +101,7 @@ export function calculateRiskScore(reports) {
   if (chaseCount > 0) explanationFactors.push(`${chaseCount} chase report${chaseCount > 1 ? 's' : ''}`);
   
   // Group presence (max 15 pts)
-  const groupCount = recentReports.filter(r => r.group_detected || (r.context_tags && r.context_tags.includes("group_presence"))).length;
+  const groupCount = verifiedReports.filter(r => r.group_detected || (r.context_tags && r.context_tags.includes("group_presence"))).length;
   if (groupCount > 0) {
     const groupScore = Math.min(15, groupCount * 4);
     weightedScore += groupScore;
@@ -113,25 +109,27 @@ export function calculateRiskScore(reports) {
   }
   
   // Contextual factors (max 20 pts)
-  const wasteProximity = recentReports.filter(r => r.context_tags && r.context_tags.includes("near_waste")).length;
-  const schoolProximity = recentReports.filter(r => r.context_tags && r.context_tags.includes("near_school")).length;
-  const roadProximity = recentReports.filter(r => r.context_tags && r.context_tags.includes("near_road")).length;
+  const wasteProximity = verifiedReports.filter(r => r.context_tags && r.context_tags.includes("near_waste")).length;
+  const schoolProximity = verifiedReports.filter(r => r.context_tags && r.context_tags.includes("near_school")).length;
+  const hospitalProximity = verifiedReports.filter(r => r.context_tags && r.context_tags.includes("near_hospital")).length;
+  const roadProximity = verifiedReports.filter(r => r.context_tags && r.context_tags.includes("near_road")).length;
   
-  if (wasteProximity > 0) { weightedScore += Math.min(8, wasteProximity * 2); explanationFactors.push("proximity to waste site"); }
-  if (schoolProximity > 0) { weightedScore += Math.min(7, schoolProximity * 2); explanationFactors.push("proximity to school or public institution"); }
-  if (roadProximity > 0) { weightedScore += Math.min(5, roadProximity * 1); explanationFactors.push("proximity to major road"); }
+  if (wasteProximity > 0) { weightedScore += Math.min(7, wasteProximity * 3); explanationFactors.push("proximity to waste site"); }
+  if (schoolProximity > 0) { weightedScore += Math.min(6, schoolProximity * 3); explanationFactors.push("proximity to school or public institution"); }
+  if (hospitalProximity > 0) { weightedScore += Math.min(8, hospitalProximity * 5); explanationFactors.push("proximity to hospital perimeter"); }
+  if (roadProximity > 0) { weightedScore += Math.min(4, roadProximity * 2); explanationFactors.push("proximity to major road"); }
   
   // Evening/night concentration (max 10 pts)
-  const eveningNight = recentReports.filter(r => r.context_tags && (r.context_tags.includes("evening") || r.context_tags.includes("night"))).length;
+  const eveningNight = verifiedReports.filter(r => r.context_tags && (r.context_tags.includes("evening") || r.context_tags.includes("night"))).length;
   if (eveningNight > 0) {
-    const timeScore = Math.min(10, eveningNight * 2);
+    const timeScore = Math.min(10, eveningNight * 2.5);
     weightedScore += timeScore;
     explanationFactors.push("evening/night concentration");
   }
   
   const finalScore = Math.min(100, Math.round(weightedScore));
   const confidence = getConfidenceFromCount(verifiedCount);
-  const level = confidence === "insufficient" ? "unknown" : getRiskLevelFromScore(finalScore);
+  const level = getRiskLevelFromScore(finalScore);
   
   return { score: finalScore, level, confidence, explanation: explanationFactors, verifiedCount, totalCount: recentReports.length };
 }
@@ -146,9 +144,8 @@ export function getDistanceKm(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
-export function clusterReportsToHotspots(reports, radiusKm = 0.3, minPoints = 3) {
-  // Simplified DBSCAN-like spatial clustering
-  const verified = reports.filter(r => r.verification_status === "verified" || r.status === "verified");
+export function clusterReportsToHotspots(reports, radiusKm = 0.3, minPoints = 2) {
+  const verified = reports.filter(r => (r.verification_status === "verified" || r.status === "verified") && r.cv_uncertainty !== "REJECTED");
   if (verified.length < minPoints) return [];
   
   const clusters = [];
@@ -158,7 +155,12 @@ export function clusterReportsToHotspots(reports, radiusKm = 0.3, minPoints = 3)
     if (visited.has(i)) continue;
     const neighbors = [];
     for (let j = 0; j < verified.length; j++) {
-      if (i !== j && getDistanceKm(verified[i].latitude, verified[i].longitude, verified[j].latitude, verified[j].longitude) <= radiusKm) {
+      const lat1 = verified[i].latitude ?? verified[i].center_lat ?? 0;
+      const lng1 = verified[i].longitude ?? verified[i].center_lng ?? 0;
+      const lat2 = verified[j].latitude ?? verified[j].center_lat ?? 0;
+      const lng2 = verified[j].longitude ?? verified[j].center_lng ?? 0;
+
+      if (i !== j && getDistanceKm(lat1, lng1, lat2, lng2) <= radiusKm) {
         neighbors.push(j);
       }
     }
@@ -166,8 +168,8 @@ export function clusterReportsToHotspots(reports, radiusKm = 0.3, minPoints = 3)
       const cluster = [i, ...neighbors];
       cluster.forEach(idx => visited.add(idx));
       const clusterReports = cluster.map(idx => verified[idx]);
-      const centerLat = clusterReports.reduce((s, r) => s + r.latitude, 0) / clusterReports.length;
-      const centerLng = clusterReports.reduce((s, r) => s + r.longitude, 0) / clusterReports.length;
+      const centerLat = clusterReports.reduce((s, r) => s + (r.latitude ?? r.center_lat ?? 0), 0) / clusterReports.length;
+      const centerLng = clusterReports.reduce((s, r) => s + (r.longitude ?? r.center_lng ?? 0), 0) / clusterReports.length;
       const riskResult = calculateRiskScore(clusterReports);
       clusters.push({ reports: clusterReports, centerLat, centerLng, ...riskResult });
     }

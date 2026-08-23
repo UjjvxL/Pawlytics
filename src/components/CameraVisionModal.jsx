@@ -2,8 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { Camera, RefreshCw, X, Check, Upload, Sparkles, AlertTriangle, ShieldCheck, Film } from "lucide-react";
 import { detectAnimalsInImage } from "@/lib/visionEngine";
 
-export default function CameraVisionModal({ isOpen, onClose, onCaptureComplete }) {
-  const [mode, setMode] = useState("camera"); // "camera" | "upload" | "preview"
+export default function CameraVisionModal({ isOpen, onClose, onCaptureComplete, initialMode = "camera" }) {
+  const [mode, setMode] = useState(initialMode); // "camera" | "upload" | "preview"
   const [facingMode, setFacingMode] = useState("environment");
   const [stream, setStream] = useState(null);
   const [cameraError, setCameraError] = useState("");
@@ -14,6 +14,17 @@ export default function CameraVisionModal({ isOpen, onClose, onCaptureComplete }
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setMode(initialMode);
+      if (initialMode === "upload") {
+        setTimeout(() => {
+          fileInputRef.current?.click();
+        }, 100);
+      }
+    }
+  }, [isOpen, initialMode]);
 
   useEffect(() => {
     if (isOpen && mode === "camera") {

@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { reportsService, hotspotsService, authorityActionsService, wardsService } from "@/api/services";
 import { Link } from "react-router-dom";
-import { FileText, CheckSquare, AlertTriangle, Flame, MapPin, Zap } from "lucide-react";
+import { motion } from "framer-motion";
+import { FileText, CheckSquare, AlertTriangle, Flame, MapPin, Zap, TrendingUp, ShieldAlert, ArrowRight } from "lucide-react";
 import { AreaChart, Area, BarChart, Bar, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { RISK_LEVELS, SEVERITY_LABELS, CATEGORY_LABELS } from "@/lib/riskEngine";
 import RiskBadge from "@/components/RiskBadge";
+import { DoggoWalking } from "@/components/DoggoIllustrations";
 
 export default function AuthorityOverview() {
   const [reports, setReports] = useState([]);
@@ -29,7 +31,12 @@ export default function AuthorityOverview() {
   }, []);
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-4 border-slate-200 border-t-blue-900 rounded-full animate-spin" /></div>;
+    return (
+      <div className="flex flex-col items-center justify-center h-80 space-y-4">
+        <DoggoWalking size={80} />
+        <div className="text-xs font-mono text-zinc-400">Loading intelligence dashboard...</div>
+      </div>
+    );
   }
 
   const totalReports = reports.length;
@@ -40,7 +47,7 @@ export default function AuthorityOverview() {
   const highRiskAreas = hotspots.filter(h => h.risk_level === "high" || h.risk_level === "very_high").length;
   const pendingActions = actions.filter(a => a.status === "pending" || a.status === "in_progress").length;
 
-  // Reports over time (last 30 days grouped by 3-day buckets)
+  // Timeline data (last 30 days)
   const timelineData = [];
   for (let i = 9; i >= 0; i--) {
     const from = new Date(Date.now() - (i + 1) * 3 * 24 * 60 * 60 * 1000);
@@ -52,87 +59,107 @@ export default function AuthorityOverview() {
     timelineData.push({ label: `D-${i * 3}`, count });
   }
 
-  // Severity distribution
+  // Severity data
   const severityData = [1, 2, 3, 4, 5].map(s => ({
     name: SEVERITY_LABELS[s]?.short,
     value: reports.filter(r => r.severity_level === s).length,
     color: SEVERITY_LABELS[s]?.color,
   }));
 
-  // Category distribution
-  const categoryData = Object.entries(CATEGORY_LABELS).map(([k, v]) => ({
-    name: v.split(" ").slice(0, 2).join(" "),
-    value: reports.filter(r => r.category === k).length,
-  })).filter(d => d.value > 0).sort((a, b) => b.value - a.value);
-
   const METRIC_CARDS = [
-    { label: "Total Reports", value: totalReports, icon: FileText, color: "text-blue-700", bg: "bg-blue-50", trend: "+16% vs last 7d" },
-    { label: "Verified Reports", value: verifiedReports, icon: CheckSquare, color: "text-green-700", bg: "bg-green-50", trend: `${Math.round(verifiedReports/totalReports*100)}% verified rate` },
-    { label: "Under Review", value: underReview, icon: AlertTriangle, color: "text-amber-600", bg: "bg-amber-50", trend: "Needs moderation" },
-    { label: "Bite / Contact", value: biteReports, icon: AlertTriangle, color: "text-red-600", bg: "bg-red-50", trend: "-12% vs last 7d" },
-    { label: "Active Hotspots", value: activeHotspots, icon: Flame, color: "text-orange-600", bg: "bg-orange-50", trend: `${highRiskAreas} high-risk` },
-    { label: "High-Risk Areas", value: highRiskAreas, icon: MapPin, color: "text-red-700", bg: "bg-red-50", trend: "Immediate attention" },
-    { label: "Actions Pending", value: pendingActions, icon: Zap, color: "text-purple-600", bg: "bg-purple-50", trend: `${actions.filter(a=>a.status==='completed').length} completed` },
+    { label: "Total Reports", value: totalReports, icon: FileText, color: "text-[#1a2744]", bg: "bg-blue-50/80", trend: "+16% 30d" },
+    { label: "Verified Reports", value: verifiedReports, icon: CheckSquare, color: "text-emerald-600", bg: "bg-emerald-50/80", trend: `${Math.round(verifiedReports / (totalReports || 1) * 100)}% rate` },
+    { label: "Under Review", value: underReview, icon: AlertTriangle, color: "text-amber-600", bg: "bg-amber-50/80", trend: "Needs moderation" },
+    { label: "Bite / Contact", value: biteReports, icon: ShieldAlert, color: "text-rose-600", bg: "bg-rose-50/80", trend: "High priority" },
+    { label: "Active Hotspots", value: activeHotspots, icon: Flame, color: "text-orange-600", bg: "bg-orange-50/80", trend: `${highRiskAreas} high-risk` },
+    { label: "Actions Pending", value: pendingActions, icon: Zap, color: "text-purple-600", bg: "bg-purple-50/80", trend: `${actions.filter(a => a.status === 'completed').length} done` },
   ];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800 font-display">Dashboard Overview</h1>
-        <p className="text-slate-500 text-sm mt-1">Noida Pilot · Sector 62 Zone · Last 30 days</p>
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Dashboard Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-200/80 pb-5">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-zinc-900 tracking-tight">Intelligence Command</h1>
+          <p className="text-zinc-500 text-xs md:text-sm mt-1">Noida Pilot Zone · Sector 62 Sector Telemetry · 30-Day Window</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link
+            to="/authority/map"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[#1a2744] text-white text-xs font-semibold rounded-xl shadow-md hover:bg-[#25375e] transition-colors btn-press"
+          >
+            <MapPin className="w-4 h-4 text-emerald-400" />
+            <span>Launch Live Risk Map</span>
+          </Link>
+        </div>
       </div>
 
-      {/* Metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Bento Grid — Metrics Tier (6 items) */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
         {METRIC_CARDS.map((m, i) => {
           const Icon = m.icon;
           return (
-            <div key={i} className="bg-white rounded-xl border border-slate-200 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className={`w-9 h-9 rounded-lg ${m.bg} flex items-center justify-center`}>
-                  <Icon className={`w-5 h-5 ${m.color}`} />
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className="bg-white rounded-2xl border border-zinc-200/80 p-4 shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className={`w-8 h-8 rounded-xl ${m.bg} flex items-center justify-center`}>
+                  <Icon className={`w-4 h-4 ${m.color}`} />
                 </div>
               </div>
-              <div className={`text-2xl font-bold ${m.color} mb-0.5`}>{m.value}</div>
-              <div className="text-sm font-medium text-slate-700">{m.label}</div>
-              <div className="text-xs text-slate-400 mt-1">{m.trend}</div>
-            </div>
+              <div className={`text-2xl font-bold font-mono tracking-tight ${m.color} mb-0.5 tabular-nums`}>{m.value}</div>
+              <div className="text-xs font-semibold text-zinc-800 truncate">{m.label}</div>
+              <div className="text-[10px] text-zinc-400 font-mono mt-1">{m.trend}</div>
+            </motion.div>
           );
         })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Reports over time */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
+      {/* Bento Tier 2 — Charts (2 Columns: 60/40) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Timeline Area Chart (7 cols) */}
+        <div className="lg:col-span-7 bg-white rounded-2xl border border-zinc-200/80 p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <div className="font-semibold text-slate-800">Reports Over Time</div>
-            <span className="text-xs text-slate-400">Last 30 days</span>
+            <div>
+              <h3 className="font-bold text-zinc-900 text-sm">Incident Telemetry Trend</h3>
+              <p className="text-xs text-zinc-400 font-mono mt-0.5">3-day aggregated report velocity</p>
+            </div>
+            <div className="flex items-center gap-1 text-xs text-emerald-600 font-semibold bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+              <TrendingUp className="w-3.5 h-3.5" /> Stable
+            </div>
           </div>
-          <ResponsiveContainer width="100%" height={180}>
+          <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={timelineData}>
               <defs>
                 <linearGradient id="grad1" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#1e3a6e" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#1e3a6e" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "12px" }} />
-              <Area type="monotone" dataKey="count" stroke="#1e3a6e" strokeWidth={2} fill="url(#grad1)" name="Reports" />
+              <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#71717a" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: "#71717a" }} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid #e4e4e7", fontSize: "12px", boxShadow: "0 10px 25px -5px rgba(0,0,0,0.1)" }} />
+              <Area type="monotone" dataKey="count" stroke="#10b981" strokeWidth={2.5} fill="url(#grad1)" name="Reports" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Severity distribution */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <div className="font-semibold text-slate-800 mb-4">Reports by Severity</div>
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={severityData} barSize={32}>
-              <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "12px" }} />
-              <Bar dataKey="value" radius={[4, 4, 0, 0]} name="Count">
+        {/* Severity Distribution (5 cols) */}
+        <div className="lg:col-span-5 bg-white rounded-2xl border border-zinc-200/80 p-5 shadow-sm">
+          <div className="mb-4">
+            <h3 className="font-bold text-zinc-900 text-sm">Severity Spectrum</h3>
+            <p className="text-xs text-zinc-400 font-mono mt-0.5">Level 1 (Nuisance) → Level 5 (Severe Bite)</p>
+          </div>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={severityData} barSize={28}>
+              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#71717a" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: "#71717a" }} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid #e4e4e7", fontSize: "12px" }} />
+              <Bar dataKey="value" radius={[6, 6, 0, 0]} name="Count">
                 {severityData.map((entry, i) => (
                   <Cell key={i} fill={entry.color} />
                 ))}
@@ -142,59 +169,68 @@ export default function AuthorityOverview() {
         </div>
       </div>
 
-      {/* Top risk areas */}
-      <div className="bg-white rounded-xl border border-slate-200 p-5">
-        <div className="flex items-center justify-between mb-4">
-          <div className="font-semibold text-slate-800">Top Risk Areas</div>
-          <Link to="/authority/wards" className="text-sm text-blue-700 font-medium hover:underline">View all wards →</Link>
-        </div>
-        <div className="space-y-3">
-          {hotspots.sort((a, b) => (b.risk_score || 0) - (a.risk_score || 0)).slice(0, 5).map((h, i) => (
-            <div key={i} className="flex items-center gap-4">
-              <div className="w-6 text-center text-sm font-bold text-slate-400">#{i + 1}</div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-slate-800 truncate">{h.name}</div>
-                <div className="text-xs text-slate-500">{h.verified_report_count} verified reports · {h.ward}</div>
-              </div>
-              <RiskBadge level={h.risk_level} size="sm" />
-              <div className="w-24">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-slate-500">{h.risk_score}/100</span>
-                </div>
-                <div className="w-full bg-slate-100 rounded-full h-1.5">
-                  <div
-                    className="h-1.5 rounded-full"
-                    style={{ width: `${h.risk_score}%`, backgroundColor: RISK_LEVELS[h.risk_level]?.color }}
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Recent actions */}
-      <div className="bg-white rounded-xl border border-slate-200 p-5">
-        <div className="flex items-center justify-between mb-4">
-          <div className="font-semibold text-slate-800">Recent Authority Actions</div>
-          <Link to="/authority/actions" className="text-sm text-blue-700 font-medium hover:underline">View all →</Link>
-        </div>
-        <div className="space-y-3">
-          {actions.slice(0, 4).map((action, i) => {
-            const statusColors = { pending: "text-amber-600 bg-amber-50", in_progress: "text-blue-600 bg-blue-50", completed: "text-green-600 bg-green-50" };
-            return (
-              <div key={i} className="flex items-start gap-3 py-2 border-b border-slate-100 last:border-0">
-                <div className="w-2 h-2 rounded-full bg-blue-400 mt-2 flex-shrink-0" />
+      {/* Bento Tier 3 — Wards & Actions (2 Columns: 50/50) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Risk Sectors */}
+        <div className="bg-white rounded-2xl border border-zinc-200/80 p-5 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-zinc-900 text-sm">Critical Risk Sectors</h3>
+            <Link to="/authority/wards" className="text-xs text-emerald-600 font-semibold hover:underline flex items-center gap-1">
+              View all <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+          <div className="divide-y divide-zinc-100">
+            {hotspots.sort((a, b) => (b.risk_score || 0) - (a.risk_score || 0)).slice(0, 5).map((h, i) => (
+              <div key={i} className="py-3 flex items-center gap-3.5 first:pt-0 last:pb-0">
+                <div className="w-6 text-center text-xs font-mono font-bold text-zinc-400">#{i + 1}</div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-slate-700">{action.note?.slice(0, 80)}...</div>
-                  <div className="text-xs text-slate-400 mt-0.5">{action.authority_name} · {action.location_label}</div>
+                  <div className="text-sm font-semibold text-zinc-900 truncate">{h.name}</div>
+                  <div className="text-xs text-zinc-400 font-mono mt-0.5">{h.verified_report_count} verified · {h.ward}</div>
                 </div>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${statusColors[action.status] || "text-slate-500 bg-slate-50"}`}>
-                  {action.status?.replace("_", " ")}
-                </span>
+                <RiskBadge level={h.risk_level} size="sm" />
+                <div className="w-20 hidden sm:block">
+                  <div className="text-right text-xs font-mono font-bold text-zinc-700 mb-1">{h.risk_score}/100</div>
+                  <div className="w-full bg-zinc-100 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="h-1.5 rounded-full"
+                      style={{ width: `${h.risk_score}%`, backgroundColor: RISK_LEVELS[h.risk_level]?.color }}
+                    />
+                  </div>
+                </div>
               </div>
-            );
-          })}
+            ))}
+          </div>
+        </div>
+
+        {/* Recent Actions Feed */}
+        <div className="bg-white rounded-2xl border border-zinc-200/80 p-5 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-zinc-900 text-sm">Field Intervention Log</h3>
+            <Link to="/authority/actions" className="text-xs text-emerald-600 font-semibold hover:underline flex items-center gap-1">
+              View log <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+          <div className="divide-y divide-zinc-100">
+            {actions.slice(0, 4).map((action, i) => {
+              const statusColors = {
+                pending: "text-amber-700 bg-amber-50 border-amber-200",
+                in_progress: "text-blue-700 bg-blue-50 border-blue-200",
+                completed: "text-emerald-700 bg-emerald-50 border-emerald-200"
+              };
+              return (
+                <div key={i} className="py-3 flex items-start gap-3 first:pt-0 last:pb-0">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 mt-2 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-medium text-zinc-800 leading-relaxed">{action.note?.slice(0, 85)}...</div>
+                    <div className="text-[11px] text-zinc-400 font-mono mt-1">{action.authority_name} · {action.location_label}</div>
+                  </div>
+                  <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-mono font-semibold border flex-shrink-0 ${statusColors[action.status] || "text-zinc-500 bg-zinc-50"}`}>
+                    {action.status?.replace("_", " ")}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
