@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { hotspotsService, contextPOIsService } from "@/api/services";
 import { MapContainer, TileLayer, Polyline, Circle, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
-import { Navigation, ArrowRight, CheckCircle, Info, Phone, Clock, MapPin, Hospital, GraduationCap, ShieldAlert, Sparkles } from "lucide-react";
+import { Navigation, ArrowRight, CheckCircle, Info, Phone, Clock, MapPin, Hospital, GraduationCap, ShieldAlert, Sparkles, LocateFixed } from "lucide-react";
 import { RISK_LEVELS } from "@/lib/riskEngine";
 import RiskBadge from "@/components/RiskBadge";
+import { useGpsLocation, fetchOsrmRoute } from "@/lib/gps";
 import "leaflet/dist/leaflet.css";
 
 // Helper to auto-fit map view to active route polyline bounds
@@ -20,14 +21,15 @@ function MapAutoBounds({ polylineCoords }) {
 }
 
 const DEMO_GREATER_NOIDA_LOCATIONS = [
-  "IILM University (KP-2)",
-  "Sharda Hospital (KP-3)",
-  "Alpha 1 Commercial Belt",
-  "Alpha 2 (Kailash Hospital / DPS)",
-  "Beta 1 Market & Ryan School",
-  "Beta 2 Sector Gate",
-  "GIMS Hospital & ARV Center",
-  "Pari Chowk Roundabout"
+  { label: "📍 My Current Location", coords: null },
+  { label: "IILM University (KP-2)", coords: [28.4633, 77.4926] },
+  { label: "Sharda Hospital (KP-3)", coords: [28.4710, 77.4830] },
+  { label: "Alpha 1 Commercial Belt", coords: [28.4730, 77.5030] },
+  { label: "Alpha 2 (Kailash Hospital / DPS)", coords: [28.4780, 77.5090] },
+  { label: "Beta 1 Market & Ryan School", coords: [28.4630, 77.5140] },
+  { label: "Beta 2 Sector Gate", coords: [28.4580, 77.5080] },
+  { label: "GIMS Hospital & ARV Center", coords: [28.4690, 77.4860] },
+  { label: "Pari Chowk Roundabout", coords: [28.4645, 77.5015] },
 ];
 
 // High-density street-snapped coordinates following actual Greater Noida road network
@@ -191,13 +193,14 @@ function getRiskLevel(score) {
 export default function RouteCheck() {
   const [from, setFrom] = useState("IILM University (KP-2)");
   const [to, setTo] = useState("Alpha 1 Commercial Belt");
-  const [routeData, setRouteData] = useState(ROUTE_DATA_MAP["IILM University (KP-2)|Alpha 1 Commercial Belt"]);
+  const [routeData, setRouteData] = useState(null);
   const [hotspots, setHotspots] = useState([]);
   const [pois, setPois] = useState([]);
   const [selectedRouteIdx, setSelectedRouteIdx] = useState(0);
   const [selectedPoiModal, setSelectedPoiModal] = useState(null);
-  const [activeFilter, setActiveFilter] = useState("all"); // 'all', 'vet_clinic', 'hospital', 'school'
+  const [activeFilter, setActiveFilter] = useState("all");
   const [loading, setLoading] = useState(false);
+  const { userLocation, gpsLoading, requestLocation } = useGpsLocation();
 
   useEffect(() => {
     Promise.all([
@@ -209,67 +212,78 @@ export default function RouteCheck() {
     });
   }, []);
 
-  const handleCompare = () => {
-    if (!from || !to) return;
+  const getCoords = (label) => {
+    if (label === "📍 My Current Location") return userLocation;
+    const loc = DEMO_GREATER_NOIDA_LOCATIONS.find(l => l.label === label);
+    return loc?.coords || null;
+  };
+
+  const handleCompare = async () => {
+    const fromCoords = getCoords(from);
+    const toCoords = getCoords(to);
+    if (!fromCoords || !toCoords) return;
     setLoading(true);
-    setTimeout(() => {
-      const key = `${from}|${to}`;
-      const reverseKey = `${to}|${from}`;
-      const data = ROUTE_DATA_MAP[key] || ROUTE_DATA_MAP[reverseKey] || generateDynamicRoute(from, to);
-      setRouteData(data);
-      setSelectedRouteIdx(0);
-      setLoading(false);
-    }, 400);
+    try {
+      const osrmRoutes = await fetchOsrmRoute(fromCoords, toCoords, "foot");
+      if (osrmRoutes.length > 0) {
+        // Risk scoring heuristic: count nearby hotspots per route
+        const scoredRoutes = osrmRoutes.map((r, i) => {
+          const nearbyHotspots = hotspots.filter(h => {
+            return r.coords.some(([lat, lng]) => {
+              const dlat = lat - h.center_lat;
+              const dlng = lng - h.center_lng;
+              return Math.sqrt(dlat * dlat + dlng * dlng) < 0.003; // ~300m
+            });
+          });
+          const riskScore = Math.min(100, nearbyHotspots.length * 25 + (i * 15) + Math.floor(Math.random() * 10));
+          const colors = ["#10b981", "#f59e0b", "#e11d48"];
+          const badges = ["Recommended · Safest", "Moderate Exposure", "Higher Exposure"];
+          return {
+            id: `osrm_${i}`,
+            name: `Route ${String.fromCharCode(65 + i)}`,
+            label: `Via ${r.distance}km road network path`,
+            badge: badges[Math.min(i, 2)],
+            path: r.coords,
+            distance: parseFloat(r.distance),
+            time: r.duration,
+            color: colors[Math.min(i, 2)],
+            riskScore,
+            reportCount: nearbyHotspots.reduce((s, h) => s + (h.report_count || 0), 0),
+            hotspotCount: nearbyHotspots.length,
+            explanation: nearbyHotspots.length > 0
+              ? `Passes near ${nearbyHotspots.length} active conflict hotspot(s) with ${nearbyHotspots.reduce((s, h) => s + (h.report_count || 0), 0)} logged incidents.`
+              : "No active conflict hotspots detected along this route. Clear path with low historical incidents.",
+          };
+        });
+        // Sort safest first
+        scoredRoutes.sort((a, b) => a.riskScore - b.riskScore);
+        const center = [
+          (fromCoords[0] + toCoords[0]) / 2,
+          (fromCoords[1] + toCoords[1]) / 2,
+        ];
+        setRouteData({ center, zoom: 14, routes: scoredRoutes });
+      } else {
+        // Fallback: straight line if OSRM fails
+        setRouteData({
+          center: [(fromCoords[0] + toCoords[0]) / 2, (fromCoords[1] + toCoords[1]) / 2],
+          zoom: 14,
+          routes: [{
+            id: "fallback", name: "Route A", label: "Direct path (road data unavailable)",
+            badge: "Straight Line", path: [fromCoords, toCoords],
+            distance: 0, time: 0, color: "#64748b", riskScore: 0,
+            reportCount: 0, hotspotCount: 0,
+            explanation: "OSRM routing unavailable. Showing straight-line path."
+          }]
+        });
+      }
+    } catch {
+      setRouteData(null);
+    }
+    setSelectedRouteIdx(0);
+    setLoading(false);
   };
 
-  const generateDynamicRoute = (f, t) => {
-    return {
-      center: [28.4680, 77.4980],
-      zoom: 14,
-      routes: [
-        {
-          id: "dyn_1",
-          name: "Route A",
-          label: `Direct Link via Main Boulevard`,
-          badge: "Lower Exposure Route",
-          path: [
-            [28.4630, 77.4920],
-            [28.4650, 77.4980],
-            [28.4710, 77.5040],
-            [28.4750, 77.5090]
-          ],
-          distance: 3.2,
-          time: 9,
-          color: "#10b981",
-          riskScore: 24,
-          reportCount: 3,
-          hotspotCount: 0,
-          explanation: "Primary road with clear lighting and zero active conflict hotspots."
-        },
-        {
-          id: "dyn_2",
-          name: "Route B",
-          label: `Alternate Service Lane`,
-          badge: "Moderate Exposure",
-          path: [
-            [28.4630, 77.4920],
-            [28.4680, 77.4870],
-            [28.4720, 77.4990],
-            [28.4750, 77.5090]
-          ],
-          distance: 3.8,
-          time: 12,
-          color: "#f59e0b",
-          riskScore: 56,
-          reportCount: 9,
-          hotspotCount: 1,
-          explanation: "Includes 1 hotspot intersection near market food stalls."
-        }
-      ]
-    };
-  };
-
-  const activeRoute = routeData?.routes[selectedRouteIdx];
+  const activeRoute = routeData?.routes?.[selectedRouteIdx];
   const filteredPois = pois.filter(p => {
     if (activeFilter === "all") return true;
     if (activeFilter === "vet_clinic") return p.poi_type === "vet_clinic";
@@ -299,15 +313,30 @@ export default function RouteCheck() {
             <div className="grid grid-cols-1 gap-3">
               <div>
                 <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">From</label>
-                <select
-                  value={from}
-                  onChange={e => setFrom(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
-                >
-                  {DEMO_GREATER_NOIDA_LOCATIONS.map(loc => (
-                    <option key={loc} value={loc}>{loc}</option>
-                  ))}
-                </select>
+                <div className="flex gap-2">
+                  <select
+                    value={from}
+                    onChange={e => {
+                      setFrom(e.target.value);
+                      if (e.target.value === "📍 My Current Location") requestLocation();
+                    }}
+                    className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
+                  >
+                    {DEMO_GREATER_NOIDA_LOCATIONS.map(loc => (
+                      <option key={loc.label} value={loc.label} disabled={loc.label === "📍 My Current Location" && !userLocation && !gpsLoading}>
+                        {loc.label}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => { requestLocation(); setFrom("📍 My Current Location"); }}
+                    disabled={gpsLoading}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1 whitespace-nowrap ${userLocation ? "bg-blue-500 text-white" : "bg-slate-800 text-blue-400 border border-slate-700"}`}
+                  >
+                    {gpsLoading ? <div className="w-3.5 h-3.5 border-2 border-blue-300 border-t-white rounded-full animate-spin" /> : <LocateFixed className="w-3.5 h-3.5" />}
+                    GPS
+                  </button>
+                </div>
               </div>
 
               <div className="flex justify-center -my-1">
@@ -323,8 +352,8 @@ export default function RouteCheck() {
                   onChange={e => setTo(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
                 >
-                  {DEMO_GREATER_NOIDA_LOCATIONS.filter(l => l !== from).map(loc => (
-                    <option key={loc} value={loc}>{loc}</option>
+                  {DEMO_GREATER_NOIDA_LOCATIONS.filter(l => l.label !== from).map(loc => (
+                    <option key={loc.label} value={loc.label}>{loc.label}</option>
                   ))}
                 </select>
               </div>
@@ -401,11 +430,20 @@ export default function RouteCheck() {
 
         {/* Dedicated Non-Overlapping Interactive Map */}
         <div className="relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 shadow-2xl h-[360px] w-full">
+          {!routeData ? (
+            <div className="flex items-center justify-center h-full text-slate-500 text-sm">
+              <div className="text-center space-y-2">
+                <Navigation className="w-8 h-8 mx-auto text-slate-600" />
+                <p>Select locations above and tap<br/><strong className="text-emerald-400">Compare Routes Telemetry</strong></p>
+              </div>
+            </div>
+          ) : (
           <MapContainer
             center={routeData.center}
             zoom={routeData.zoom}
             className="h-full w-full"
             zoomControl={false}
+            key={routeData.routes[0]?.id || 'map'}
           >
             <TileLayer
               url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
@@ -474,9 +512,11 @@ export default function RouteCheck() {
             <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
             <span className="text-slate-300 font-medium">Interactive Street Map</span>
           </div>
+          )}
         </div>
 
         {/* Route Details Cards (Stacked cleanly below map, no overlap) */}
+        {routeData && (
         <div className="space-y-3 pt-1">
           <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center justify-between">
             <span>Available Route Paths ({routeData.routes.length})</span>
@@ -544,6 +584,7 @@ export default function RouteCheck() {
             );
           })}
         </div>
+        )}
 
         {/* Disclaimer */}
         <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-3.5 flex items-start gap-3 text-xs text-slate-400">

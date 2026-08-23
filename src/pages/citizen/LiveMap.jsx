@@ -1,12 +1,30 @@
 import { useState, useEffect } from "react";
-import { MapContainer, TileLayer, Circle, Popup, Marker } from "react-leaflet";
+import { MapContainer, TileLayer, Circle, Popup, Marker, useMap } from "react-leaflet";
 import L from "leaflet";
 import { reportsService, hotspotsService, contextPOIsService } from "@/api/services";
 import { RISK_LEVELS, CATEGORY_LABELS, SEVERITY_LABELS } from "@/lib/riskEngine";
 import RiskBadge, { ConfidenceBadge } from "@/components/RiskBadge";
-import { Filter, X, AlertTriangle, Phone, ShieldAlert, MapPin, Clock, Navigation, Sparkles } from "lucide-react";
+import { Filter, X, AlertTriangle, Phone, ShieldAlert, MapPin, Clock, Navigation, Sparkles, LocateFixed } from "lucide-react";
 import { useTheme } from "@/lib/theme";
+import { useGpsLocation } from "@/lib/gps";
 import "leaflet/dist/leaflet.css";
+
+// Fly map to user GPS location when it changes
+function FlyToLocation({ position }) {
+  const map = useMap();
+  useEffect(() => {
+    if (position) map.flyTo(position, 16, { duration: 1.2 });
+  }, [position, map]);
+  return null;
+}
+
+// Blue pulsing GPS dot
+const gpsIcon = L.divIcon({
+  html: `<div style="position:relative"><div style="width:18px;height:18px;border-radius:50%;background:#3b82f6;border:3px solid white;box-shadow:0 0 12px rgba(59,130,246,0.6)"></div><div style="position:absolute;top:-6px;left:-6px;width:30px;height:30px;border-radius:50%;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);animation:pulse 2s infinite"></div></div>`,
+  className: "",
+  iconSize: [18, 18],
+  iconAnchor: [9, 9],
+});
 
 // Centered on Greater Noida (Knowledge Park 2, IILM, Alpha 1, Beta 1)
 const DEMO_CENTER = [28.4650, 77.4950];
@@ -78,6 +96,7 @@ const SEVERITY_FILTERS = [
 
 export default function LiveMap() {
   const { theme } = useTheme();
+  const { userLocation, gpsLoading, requestLocation } = useGpsLocation();
   const [reports, setReports] = useState([]);
   const [hotspots, setHotspots] = useState([]);
   const [pois, setPois] = useState([]);
@@ -138,7 +157,7 @@ export default function LiveMap() {
     <div className="relative h-[100dvh] w-full overflow-hidden bg-slate-950">
       {/* Map */}
       <MapContainer
-        center={DEMO_CENTER}
+        center={userLocation || DEMO_CENTER}
         zoom={14}
         className="h-full w-full"
         zoomControl={false}
@@ -147,6 +166,17 @@ export default function LiveMap() {
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
+
+        {/* GPS user location blue dot */}
+        {userLocation && (
+          <>
+            <FlyToLocation position={userLocation} />
+            <Circle center={userLocation} radius={80} pathOptions={{ color: "#3b82f6", fillColor: "#3b82f6", fillOpacity: 0.08, weight: 1 }} />
+            <Marker position={userLocation} icon={gpsIcon}>
+              <Popup><div className="text-slate-900 text-xs font-semibold">📍 Your Location</div></Popup>
+            </Marker>
+          </>
+        )}
 
         {/* Hotspot circles */}
         {showHotspots && hotspots.map((h, i) => {
@@ -271,6 +301,14 @@ export default function LiveMap() {
 
       {/* Quick Layer Toggles */}
       <div className="absolute bottom-24 right-4 z-[1000] flex flex-col gap-2">
+        <button
+          onClick={requestLocation}
+          disabled={gpsLoading}
+          className={`px-3 py-2 rounded-xl text-xs font-bold shadow-xl transition-all backdrop-blur-md flex items-center gap-1.5 ${userLocation ? "bg-blue-500 text-white" : "bg-slate-900/90 text-blue-400 border border-slate-800"}`}
+        >
+          {gpsLoading ? <div className="w-4 h-4 border-2 border-blue-300 border-t-white rounded-full animate-spin" /> : <LocateFixed className="w-4 h-4" />}
+          {gpsLoading ? "Locating..." : "My Location"}
+        </button>
         <button
           onClick={() => setShowHotspots(!showHotspots)}
           className={`px-3 py-2 rounded-xl text-xs font-bold shadow-xl transition-all backdrop-blur-md ${showHotspots ? "bg-rose-600 text-white" : "bg-slate-900/90 text-slate-400 border border-slate-800"}`}
