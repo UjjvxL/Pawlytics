@@ -1,4 +1,5 @@
 import { supabase } from '../supabaseClient.js';
+import { isDemoMode } from '@/lib/runtimeConfig';
 
 // Demo Fallbacks to ensure zero-downtime performance
 const DEMO_WARDS = [
@@ -236,22 +237,26 @@ const createCrudService = (tableName, demoFallback = []) => ({
     try {
       let query = supabase.from(tableName).select('*');
       Object.entries(params).forEach(([key, value]) => {
-        query = query.eq(key, value);
+        query = query.eq(key, key === 'is_demo' ? isDemoMode() && value === true : value);
       });
       const { data, error } = await query;
-      if (error || !data || data.length === 0) return demoFallback;
+      if (error) throw error;
+      if ((!data || data.length === 0) && isDemoMode()) return demoFallback;
       return data;
-    } catch {
-      return demoFallback;
+    } catch (error) {
+      if (isDemoMode()) return demoFallback;
+      throw error;
     }
   },
   async create(data) {
     try {
-      const { data: result, error } = await supabase.from(tableName).insert([data]).select().single();
+      const safeData = { ...data, ...(Object.hasOwn(data, 'is_demo') ? { is_demo: isDemoMode() && data.is_demo === true } : {}) };
+      const { data: result, error } = await supabase.from(tableName).insert([safeData]).select().single();
       if (error) throw error;
       return result;
-    } catch {
-      return { id: "demo-" + Date.now(), ...data, is_demo: true, created_at: new Date().toISOString() };
+    } catch (error) {
+      if (isDemoMode()) return { id: "demo-" + Date.now(), ...data, is_demo: true, created_at: new Date().toISOString() };
+      throw error;
     }
   },
   async update(id, updates) {
@@ -259,8 +264,9 @@ const createCrudService = (tableName, demoFallback = []) => ({
       const { data: result, error } = await supabase.from(tableName).update(updates).eq('id', id).select().single();
       if (error) throw error;
       return result;
-    } catch {
-      return { id, ...updates };
+    } catch (error) {
+      if (isDemoMode()) return { id, ...updates };
+      throw error;
     }
   },
   async delete(id) {
@@ -268,8 +274,9 @@ const createCrudService = (tableName, demoFallback = []) => ({
       const { error } = await supabase.from(tableName).delete().eq('id', id);
       if (error) throw error;
       return true;
-    } catch {
-      return true;
+    } catch (error) {
+      if (isDemoMode()) return true;
+      throw error;
     }
   }
 });
@@ -281,19 +288,108 @@ export const authorityActionsService = createCrudService('authority_actions', DE
 export const contextPOIsService = createCrudService('context_pois', DEMO_POIS);
 export const usersService = createCrudService('users', []);
 
+export const notificationsService = {
+  async listMine() {
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (error) throw error;
+    return data || [];
+  },
+  async markRead(id) {
+    const { data, error } = await supabase
+      .from('notifications')
+      .update({ read_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+};
+
+export const reportConfirmationsService = {
+  async decide(reportId, userId, decision, reason = null) {
+    const { data, error } = await supabase
+      .from('report_confirmations')
+      .upsert({ report_id: reportId, user_id: userId, decision, reason }, { onConflict: 'report_id,user_id' })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+};
+
+export const analyticsService = {
+  async daily(days = 30) {
+    const since = new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10);
+    const { data, error } = await supabase
+      .from('analytics_daily')
+      .select('metric_date,event_type,event_count')
+      .gte('metric_date', since)
+      .order('metric_date');
+    if (error) throw error;
+    return data || [];
+  },
+};
+
+export const auditLogsService = {
+  async forEntity(entityType, entityId) {
+    const { data, error } = await supabase
+      .from('audit_logs')
+      .select('*')
+      .eq('entity_type', entityType)
+      .eq('entity_id', entityId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  },
+};
+
+export const evidenceService = {
+  async uploadDataUrl(userId, submissionId, dataUrl) {
+    const blob = await fetch(dataUrl).then((response) => response.blob());
+    const allowed = new Set(['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/webm']);
+    if (!allowed.has(blob.type) || blob.size > 10 * 1024 * 1024) {
+      throw new Error('Evidence must be JPG, PNG, WebP, MP4 or WebM and no larger than 10 MB.');
+    }
+    const extension = blob.type.split('/')[1].replace('jpeg', 'jpg');
+    const path = `${userId}/${submissionId}.${extension}`;
+    const { error } = await supabase.storage.from('report-evidence').upload(path, blob, { contentType: blob.type, upsert: false });
+    if (error && error.statusCode !== '409') throw error;
+    return path;
+  },
+  async signedUrl(path, expiresIn = 300) {
+    if (!path) return null;
+    const { data, error } = await supabase.storage.from('report-evidence').createSignedUrl(path, expiresIn);
+    if (error) throw error;
+    return data.signedUrl;
+  },
+};
+
 export const reportsService = {
   ...createCrudService('reports', DEMO_REPORTS),
+  async activePublic(days = 30) {
+    if (isDemoMode()) return DEMO_REPORTS.filter((report) => report.verification_status === 'verified');
+    const { data, error } = await supabase.rpc('get_active_reports', { days });
+    if (error) throw error;
+    return data || [];
+  },
   async filter(params = {}) {
     try {
       let query = supabase.from('reports').select('*');
       Object.entries(params).forEach(([key, value]) => {
-        query = query.eq(key, value);
+        query = query.eq(key, key === 'is_demo' ? isDemoMode() && value === true : value);
       });
       const { data, error } = await query;
-      if (error || !data || data.length === 0) return DEMO_REPORTS;
+      if (error) throw error;
+      if ((!data || data.length === 0) && isDemoMode()) return DEMO_REPORTS;
       return data;
-    } catch {
-      return DEMO_REPORTS;
+    } catch (error) {
+      if (isDemoMode()) return DEMO_REPORTS;
+      throw error;
     }
   }
 };
@@ -304,13 +400,15 @@ export const hotspotsService = {
     try {
       let query = supabase.from('hotspots').select('*');
       Object.entries(params).forEach(([key, value]) => {
-        query = query.eq(key, value);
+        query = query.eq(key, key === 'is_demo' ? isDemoMode() && value === true : value);
       });
       const { data, error } = await query;
-      if (error || !data || data.length === 0) return DEMO_HOTSPOTS;
+      if (error) throw error;
+      if ((!data || data.length === 0) && isDemoMode()) return DEMO_HOTSPOTS;
       return data;
-    } catch {
-      return DEMO_HOTSPOTS;
+    } catch (error) {
+      if (isDemoMode()) return DEMO_HOTSPOTS;
+      throw error;
     }
   }
 };
@@ -318,4 +416,3 @@ export const hotspotsService = {
 export { authService } from './auth.js';
 export { aiValidationWorker } from './aiValidationWorker.js';
 export { whatsappIngestion } from './whatsappIngestion.js';
-

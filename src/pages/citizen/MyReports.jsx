@@ -2,17 +2,26 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { reportsService, authService } from "@/api/services";
 import { CATEGORY_LABELS, SEVERITY_LABELS } from "@/lib/riskEngine";
-import { FileText, CheckCircle, Clock, XCircle, AlertTriangle, Shield, Award, Download, Bell, Sparkles, MapPin, ChevronRight, Eye, Trash2, User, Edit3 } from "lucide-react";
+import { FileText, CheckCircle, Clock, XCircle, AlertTriangle, Shield, Award, Download, Bell, Sparkles, MapPin, Edit3 } from "lucide-react";
 import { DoggoSitting } from "@/components/DoggoIllustrations";
+import { REPORT_STATUS_LABELS } from "@/lib/reportLifecycle";
+import { isDemoMode } from "@/lib/runtimeConfig";
+import { useAuth } from "@/lib/AuthContext";
 
 const STATUS_CONFIG = {
+  submitted: { label: REPORT_STATUS_LABELS.submitted, icon: Clock, color: "text-sky-400 bg-sky-500/10 border-sky-500/30", step: 1 },
+  pending_verification: { label: REPORT_STATUS_LABELS.pending_verification, icon: Clock, color: "text-amber-400 bg-amber-500/10 border-amber-500/30", step: 2 },
   under_review: { label: "CV Under Review", icon: Clock, color: "text-amber-400 bg-amber-500/10 border-amber-500/30", step: 1 },
   verified: { label: "Verified & Escalated", icon: CheckCircle, color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30", step: 3 },
+  assigned: { label: REPORT_STATUS_LABELS.assigned, icon: Shield, color: "text-blue-400 bg-blue-500/10 border-blue-500/30", step: 4 },
+  resolved: { label: REPORT_STATUS_LABELS.resolved, icon: CheckCircle, color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30", step: 5 },
+  expired: { label: REPORT_STATUS_LABELS.expired, icon: Clock, color: "text-slate-400 bg-slate-500/10 border-slate-500/30", step: 0 },
   rejected: { label: "Rejected / Spam", icon: XCircle, color: "text-rose-400 bg-rose-500/10 border-rose-500/30", step: 0 },
   duplicate: { label: "Duplicate Entry", icon: AlertTriangle, color: "text-slate-400 bg-slate-500/10 border-slate-500/30", step: 0 },
 };
 
 export default function MyReports() {
+  const { user } = useAuth();
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedReportDetail, setSelectedReportDetail] = useState(null);
@@ -23,12 +32,12 @@ export default function MyReports() {
 
   useEffect(() => {
     setUserProfile(authService.getProfile());
-    reportsService.filter({ is_demo: true })
+    reportsService.filter(isDemoMode() ? { is_demo: true } : { reporter_id: user.id, is_demo: false })
       .then(r => {
-        setReports(r.sort((a, b) => new Date(b.incident_timestamp || b.created_date) - new Date(a.incident_timestamp || a.created_date)));
+        setReports(r.sort((a, b) => new Date(b.incident_timestamp || b.created_date).getTime() - new Date(a.incident_timestamp || a.created_date).getTime()));
         setLoading(false);
       });
-  }, []);
+  }, [user.id]);
 
   const downloadVerificationReceipt = (report) => {
     const receiptData = {
@@ -58,7 +67,7 @@ export default function MyReports() {
 
   const filteredReports = reports.filter(r => {
     if (activeTab === "verified") return r.status === "verified" || r.verification_status === "verified";
-    if (activeTab === "pending") return r.status === "under_review" || r.status === "pending";
+    if (activeTab === "pending") return ["submitted", "pending_verification", "under_review", "pending"].includes(r.status);
     return true;
   });
 

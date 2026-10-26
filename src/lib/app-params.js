@@ -1,6 +1,5 @@
 const isNode = typeof window === 'undefined';
-const windowObj = isNode ? { localStorage: new Map() } : window;
-const storage = windowObj.localStorage;
+const storage = isNode ? null : window.localStorage;
 
 const toSnakeCase = (str) => {
 	return str.replace(/([A-Z])/g, '_$1').toLowerCase();
@@ -10,6 +9,7 @@ const getAppParamValue = (paramName, { defaultValue = undefined, removeFromUrl =
 	if (isNode) {
 		return defaultValue;
 	}
+	if (!storage) return defaultValue;
 	const storageKey = `pawlytics_${toSnakeCase(paramName)}`;
 	const urlParams = new URLSearchParams(window.location.search);
 	const searchParam = urlParams.get(paramName);
@@ -35,6 +35,9 @@ const getAppParamValue = (paramName, { defaultValue = undefined, removeFromUrl =
 }
 
 const getAppParams = () => {
+	if (isNode || !storage) {
+		return { appId: "pawlytics-app", token: null, fromUrl: null, appBaseUrl: null };
+	}
 	if (getAppParamValue("clear_access_token") === 'true') {
 		storage.removeItem('pawlytics_access_token');
 		storage.removeItem('token');

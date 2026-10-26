@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Camera, RefreshCw, X, Check, Upload, Sparkles, AlertTriangle, ShieldCheck, Film } from "lucide-react";
+import { RefreshCw, X, Check, Upload, Sparkles, AlertTriangle, ShieldCheck, Film } from "lucide-react";
 import { detectAnimalsInImage } from "@/lib/visionEngine";
 
 export default function CameraVisionModal({ isOpen, onClose, onCaptureComplete, initialMode = "camera" }) {
@@ -93,6 +93,13 @@ export default function CameraVisionModal({ isOpen, onClose, onCaptureComplete, 
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "video/mp4", "video/webm"]);
+    if (!allowedTypes.has(file.type) || file.size > 10 * 1024 * 1024) {
+      setCameraError("Use a JPG, PNG, WebP, MP4 or WebM file no larger than 10 MB.");
+      e.target.value = "";
+      return;
+    }
+
     setAnalyzing(true);
     const reader = new FileReader();
 
@@ -124,13 +131,18 @@ export default function CameraVisionModal({ isOpen, onClose, onCaptureComplete, 
     }
 
     reader.onload = (event) => {
+      if (typeof event.target?.result !== "string") {
+        setAnalyzing(false);
+        return;
+      }
+      const source = event.target.result;
       const img = new Image();
-      img.src = event.target.result;
+      img.src = source;
       img.onload = async () => {
         const canvas = canvasRef.current || document.createElement("canvas");
         const result = await detectAnimalsInImage(img, canvas);
         setAiResult(result);
-        setPreviewImage(result.annotatedImage || event.target.result);
+        setPreviewImage(result.annotatedImage || source);
         setMode("preview");
         setAnalyzing(false);
       };
@@ -258,7 +270,7 @@ export default function CameraVisionModal({ isOpen, onClose, onCaptureComplete, 
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*,video/*"
+              accept=".jpg,.jpeg,.png,.webp,.mp4,.webm"
               onChange={handleFileUpload}
               className="hidden"
             />

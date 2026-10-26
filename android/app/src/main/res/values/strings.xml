@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Pawlytics</string>
+    <string name="title_activity_main">Pawlytics</string>
+    <string name="package_name">com.pawlytics.app</string>
+    <string name="custom_url_scheme">com.pawlytics.app</string>
+</resources>

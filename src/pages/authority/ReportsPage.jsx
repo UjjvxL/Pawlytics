@@ -12,7 +12,7 @@ export default function ReportsPage() {
   useEffect(() => {
     reportsService.filter({ is_demo: true })
       .then(r => {
-        setReports(r.sort((a, b) => new Date(b.incident_timestamp) - new Date(a.incident_timestamp)));
+        setReports(r.sort((a, b) => new Date(b.incident_timestamp).getTime() - new Date(a.incident_timestamp).getTime()));
         setLoading(false);
       });
   }, []);

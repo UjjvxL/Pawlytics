@@ -1,4 +1,4 @@
-import { MapPin, TrendingUp, AlertCircle, ShieldAlert } from "lucide-react";
+import { MapPin, AlertCircle, ShieldAlert } from "lucide-react";
 
 const STATE_DATA = [
   { state: "Maharashtra", cases: "4,85,000", percentage: "13.0%", risk: "Critical", color: "bg-red-500", raw: 485000 },

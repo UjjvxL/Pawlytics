@@ -8,24 +8,28 @@ Content-oriented master catalog of all compiled knowledge in the wiki.
 
 - [[llm-wiki-pattern]] — Architectural pattern for personal knowledge bases maintained by an LLM agent in Obsidian.
 - [[rag-vs-persistent-wiki]] — Comparative breakdown between query-time standard RAG and a persistent compounding LLM Wiki.
-- [[pawlytics-authority-portal]] — Control room, escalation thresholds, staff roles, and settings for municipal authorities.
+- [[pawlytics-web-app]] — Master overview of the Pawlytics stray animal analytics web application.
+- [[citizen-portal]] — Public citizen safety reporting, live mapping, route checking, and safety guidelines.
+- [[authority-portal]] — Municipal command center, incident verification queue, hotspot analytics, actions dispatch, and compliance exports.
+- [[risk-engine]] — Spatial-temporal risk calculation engine, computer vision quality gates, and active learning pipeline.
+- [[supabase-backend-service]] — PostgreSQL database schema, modular services, real-time web sockets, and offline PWA synchronization.
 
 ---
 
 ## 👥 Entities & Tools
 
 - [[andrej-karpathy]] — AI researcher & author of the LLM Wiki concept Gist.
-- [[pawlytics-platform]] — Stray animal analytics and conflict intelligence web application.
+- [[pawlytics-project]] — Master entity page for the Pawlytics platform.
 
 ---
 
 ## 📚 Ingested Sources
 
 - [[karpathy-llm-wiki-gist]] — Summary & key takeaways of Andrej Karpathy's LLM Wiki Gist.
-- [[2026-08-23-pawlytics-architecture-overview]] — Architecture & feature breakdown of the Pawlytics web app.
+- [[pawlytics-architecture-and-progress]] — Full technical architecture and development progress report for the Pawlytics web app.
 
 ---
 
 ## 🔍 Queries & Syntheses
 
-- [[llm-wiki-vs-rag-developer-guide]] — Deep dive comparison matrix & operational blueprint for LLM Wiki vs RAG.
+*No query pages filed yet.*

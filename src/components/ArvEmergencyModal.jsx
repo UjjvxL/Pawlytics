@@ -1,4 +1,4 @@
-import { Phone, ShieldAlert, MapPin, X, ExternalLink, HeartPulse } from "lucide-react";
+import { Phone, ShieldAlert, MapPin, X, HeartPulse } from "lucide-react";
 
 const ARV_FACILITIES = [
   {

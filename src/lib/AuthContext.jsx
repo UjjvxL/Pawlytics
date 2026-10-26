@@ -1,7 +1,8 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { authService } from '@/api/services/auth';
+import { isDemoMode } from '@/lib/runtimeConfig';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -25,7 +26,7 @@ export const AuthProvider = ({ children }) => {
     });
     
     return () => {
-      if (unsubscribe) unsubscribe();
+      unsubscribe?.unsubscribe();
     };
   }, []);
 
@@ -36,17 +37,19 @@ export const AuthProvider = ({ children }) => {
       if (currentUser) {
         setUser(currentUser);
         setIsAuthenticated(true);
-      } else {
-        const demoUser = { id: 'demo-user-1', email: 'demo@noida.gov.in', role: 'admin' };
-        setUser(demoUser);
+      } else if (isDemoMode()) {
+        setUser({ id: 'demo-user-1', email: 'demo@pawlytics.local', role: 'admin' });
         setIsAuthenticated(true);
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
       }
       setIsLoadingAuth(false);
       setAuthChecked(true);
     } catch (error) {
-      console.warn('Auth check fallback to demo user:', error);
-      setUser({ id: 'demo-user-1', email: 'demo@noida.gov.in', role: 'admin' });
-      setIsAuthenticated(true);
+      console.warn('Auth check failed:', error);
+      setUser(null);
+      setIsAuthenticated(false);
       setIsLoadingAuth(false);
       setAuthChecked(true);
     }

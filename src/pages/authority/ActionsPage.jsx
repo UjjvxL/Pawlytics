@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
-import { authorityActionsService } from "@/api/services";
+import { authorityActionsService, reportsService } from "@/api/services";
 import { Plus, CheckCircle, Clock, XCircle, Zap } from "lucide-react";
+import { useAuth } from "@/lib/AuthContext";
+import { isDemoMode } from "@/lib/runtimeConfig";
 
 const ACTION_TYPE_LABELS = {
   field_inspection_scheduled: "Field Inspection Scheduled",
@@ -16,25 +18,30 @@ const ACTION_TYPE_LABELS = {
 
 const STATUS_CONFIG = {
   pending: { label: "Pending", color: "text-amber-600 bg-amber-50 border-amber-200", icon: Clock },
+  acknowledged: { label: "Acknowledged", color: "text-sky-600 bg-sky-50 border-sky-200", icon: CheckCircle },
   in_progress: { label: "In Progress", color: "text-blue-600 bg-blue-50 border-blue-200", icon: Zap },
   completed: { label: "Completed", color: "text-green-600 bg-green-50 border-green-200", icon: CheckCircle },
   cancelled: { label: "Cancelled", color: "text-slate-500 bg-slate-50 border-slate-200", icon: XCircle },
 };
 
 export default function ActionsPage() {
+  const { user } = useAuth();
   const [actions, setActions] = useState([]);
+  const [assignableReports, setAssignableReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [filter, setFilter] = useState("all");
-  const [form, setForm] = useState({ action_type: "", note: "", location_label: "", ward_id: "" });
+  const [form, setForm] = useState({ action_type: "", note: "", location_label: "", ward_id: "", due_at: "", report_id: "" });
+  const [resolutionDrafts, setResolutionDrafts] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
   const WARD_OPTIONS = ["Sector 62 Noida", "Sector 18 Atta Market", "Sector 37 Noida", "Sector 50 Noida", "Sector 93 Noida", "Sector 12 Noida"];
 
   useEffect(() => {
-    authorityActionsService.filter({ is_demo: true })
-      .then(a => {
-        setActions(a.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
+    Promise.all([authorityActionsService.filter({ is_demo: true }), reportsService.filter({ is_demo: true })])
+      .then(([a, reports]) => {
+        setActions(a.sort((a, b) => new Date(b.created_at || b.created_date).getTime() - new Date(a.created_at || a.created_date).getTime()));
+        setAssignableReports(reports.filter((report) => report.status === "verified"));
         setLoading(false);
       });
   }, []);
@@ -44,22 +51,42 @@ export default function ActionsPage() {
     setSubmitting(true);
     const created = await authorityActionsService.create({
       ...form,
-      authority_name: "Authority Demo User",
+      report_id: form.report_id || null,
+      authority_id: isDemoMode() ? null : user.id,
+      assigned_to: isDemoMode() ? null : user.id,
+      authority_name: user.email,
       status: "pending",
-      is_demo: true,
+      due_at: form.due_at ? new Date(form.due_at).toISOString() : new Date(Date.now() + 86_400_000).toISOString(),
+      is_demo: isDemoMode(),
     });
+    if (form.report_id) {
+      await reportsService.update(form.report_id, { status: "assigned", assigned_to: user.id });
+      setAssignableReports((current) => current.filter(({ id }) => id !== form.report_id));
+    }
     setActions(prev => [created, ...prev]);
-    setForm({ action_type: "", note: "", location_label: "", ward_id: "" });
+    setForm({ action_type: "", note: "", location_label: "", ward_id: "", due_at: "", report_id: "" });
     setShowForm(false);
     setSubmitting(false);
   };
 
   const updateStatus = async (id, status) => {
+    const resolution = resolutionDrafts[id] || {};
+    if (status === "completed" && !resolution.summary?.trim()) return;
+    const action = actions.find((item) => item.id === id);
     await authorityActionsService.update(id, {
       status,
+      acknowledged_at: status === "acknowledged" ? new Date().toISOString() : undefined,
       completed_at: status === "completed" ? new Date().toISOString() : null,
+      resolution_summary: status === "completed" ? resolution.summary.trim() : undefined,
+      resolution_evidence_url: status === "completed" ? resolution.evidenceUrl?.trim() || null : undefined,
     });
-    setActions(prev => prev.map(a => a.id === id ? { ...a, status } : a));
+    if (status === "completed" && action?.report_id) {
+      await reportsService.update(action.report_id, {
+        status: "resolved",
+        resolution_summary: resolution.summary.trim(),
+      });
+    }
+    setActions(prev => prev.map(a => a.id === id ? { ...a, status, ...(status === "completed" ? { resolution_summary: resolution.summary, resolution_evidence_url: resolution.evidenceUrl } : {}) } : a));
   };
 
   const filtered = actions.filter(a => filter === "all" || a.status === filter);
@@ -112,6 +139,14 @@ export default function ActionsPage() {
             </div>
           </div>
           <div className="mb-3">
+            <label htmlFor="action-report" className="text-xs font-medium text-slate-500 uppercase mb-1.5 block">Verified report to assign (optional)</label>
+            <select id="action-report" value={form.report_id} onChange={e => setForm(f => ({ ...f, report_id: e.target.value }))}
+              className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-900/30">
+              <option value="">General area action</option>
+              {assignableReports.map((report) => <option key={report.id} value={report.id}>{report.location_label} · {report.category.replaceAll('_', ' ')}</option>)}
+            </select>
+          </div>
+          <div className="mb-3">
             <label className="text-xs font-medium text-slate-500 uppercase mb-1.5 block">Notes</label>
             <textarea
               value={form.note}
@@ -120,6 +155,12 @@ export default function ActionsPage() {
               rows={3}
               className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-900/30 resize-none"
             />
+          </div>
+          <div className="mb-3">
+            <label htmlFor="action-due-at" className="text-xs font-medium text-slate-500 uppercase mb-1.5 block">SLA due date</label>
+            <input id="action-due-at" type="datetime-local" value={form.due_at}
+              onChange={e => setForm(f => ({ ...f, due_at: e.target.value }))}
+              className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-900/30" />
           </div>
           <div className="flex gap-2">
             <button onClick={handleSubmit} disabled={submitting || !form.action_type || !form.location_label}
@@ -159,22 +200,39 @@ export default function ActionsPage() {
               </div>
               {action.note && <p className="text-sm text-slate-600 mb-3">{action.note}</p>}
               <div className="flex items-center gap-2 text-xs text-slate-400 mb-3">
-                <span>📅 {new Date(action.created_date).toLocaleDateString("en-IN")}</span>
+                <span>📅 {new Date(action.created_at || action.created_date).toLocaleDateString("en-IN")}</span>
+                {action.due_at && <span className={new Date(action.due_at) < new Date() && action.status !== "completed" ? "text-rose-600 font-semibold" : ""}>SLA: {new Date(action.due_at).toLocaleString("en-IN")}</span>}
                 {action.completed_at && <span>✓ Completed {new Date(action.completed_at).toLocaleDateString("en-IN")}</span>}
               </div>
+              {action.resolution_summary && <div className="mb-3 rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-xs text-emerald-900"><strong>Resolution:</strong> {action.resolution_summary}</div>}
               {action.status !== "completed" && action.status !== "cancelled" && (
-                <div className="flex gap-2">
+                <div className="space-y-2">
+                  {action.status !== "pending" && (
+                    <div className="grid sm:grid-cols-2 gap-2">
+                      <input aria-label="Resolution summary" placeholder="Required resolution summary"
+                        value={resolutionDrafts[action.id]?.summary || ""}
+                        onChange={e => setResolutionDrafts(d => ({ ...d, [action.id]: { ...d[action.id], summary: e.target.value } }))}
+                        className="border border-slate-200 rounded-lg px-3 py-2 text-xs" />
+                      <input aria-label="Resolution evidence URL" type="url" placeholder="Evidence URL (optional)"
+                        value={resolutionDrafts[action.id]?.evidenceUrl || ""}
+                        onChange={e => setResolutionDrafts(d => ({ ...d, [action.id]: { ...d[action.id], evidenceUrl: e.target.value } }))}
+                        className="border border-slate-200 rounded-lg px-3 py-2 text-xs" />
+                    </div>
+                  )}
+                  <div className="flex gap-2">
                   {action.status === "pending" && (
-                    <button onClick={() => updateStatus(action.id, "in_progress")} className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-medium border border-blue-200">
-                      Mark In Progress
+                    <button onClick={() => updateStatus(action.id, "acknowledged")} className="px-3 py-1.5 bg-sky-50 text-sky-700 rounded-lg text-xs font-medium border border-sky-200">
+                      Acknowledge
                     </button>
                   )}
-                  <button onClick={() => updateStatus(action.id, "completed")} className="px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-xs font-medium border border-green-200">
+                  {action.status === "acknowledged" && <button onClick={() => updateStatus(action.id, "in_progress")} className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-medium border border-blue-200">Start field work</button>}
+                  <button onClick={() => updateStatus(action.id, "completed")} disabled={!resolutionDrafts[action.id]?.summary?.trim()} className="px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-xs font-medium border border-green-200 disabled:opacity-40">
                     Mark Completed
                   </button>
                   <button onClick={() => updateStatus(action.id, "cancelled")} className="px-3 py-1.5 bg-slate-50 text-slate-500 rounded-lg text-xs font-medium border border-slate-200">
                     Cancel
                   </button>
+                  </div>
                 </div>
               )}
             </div>

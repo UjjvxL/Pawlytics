@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, LocateFixed, Search, X, Check, Navigation, Sparkles, Edit3 } from "lucide-react";
+import { MapPin, LocateFixed, Search, X, Check, Sparkles, Edit3 } from "lucide-react";
 import { useLocationState } from "@/lib/locationContext";
 
 export default function LocationSelectorModal({ isOpen, onClose }) {

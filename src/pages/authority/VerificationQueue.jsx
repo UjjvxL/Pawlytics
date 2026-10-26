@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
-import { reportsService, verificationsService } from "@/api/services";
+import { evidenceService, reportsService, verificationsService } from "@/api/services";
 import { CATEGORY_LABELS, SEVERITY_LABELS } from "@/lib/riskEngine";
-import { CheckCircle, XCircle, Copy, ChevronDown, AlertTriangle, ShieldCheck, Camera, Video, Maximize2, Eye, X } from "lucide-react";
+import { CheckCircle, XCircle, Copy, ChevronDown, AlertTriangle, Camera, Video, Maximize2, Eye, X } from "lucide-react";
 import { recordHumanCorrection } from "@/lib/activeLearning";
+import { useAuth } from "@/lib/AuthContext";
+import { findPotentialDuplicates, REPORT_STATUS } from "@/lib/reportLifecycle";
+import { isDemoMode } from "@/lib/runtimeConfig";
 
 const TRUST_LABELS = { 1.0: { label: "Established", color: "text-green-600" }, 0.7: { label: "New Reporter", color: "text-amber-500" }, 0.5: { label: "Flagged", color: "text-red-500" } };
 
@@ -13,6 +16,7 @@ function getTrustLabel(weight) {
 }
 
 export default function VerificationQueue() {
+  const { user } = useAuth();
   const [reports, setReports] = useState([]);
   const [expanded, setExpanded] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -23,8 +27,12 @@ export default function VerificationQueue() {
 
   useEffect(() => {
     reportsService.filter({ is_demo: true })
-      .then(r => {
-        setReports(r.sort((a, b) => b.severity_level - a.severity_level));
+      .then(async r => {
+        const withEvidence = await Promise.all(r.map(async (report) => ({
+          ...report,
+          signed_evidence_url: report.evidence_path ? await evidenceService.signedUrl(report.evidence_path).catch(() => null) : null,
+        })));
+        setReports(withEvidence.sort((a, b) => b.severity_level - a.severity_level));
         setLoading(false);
       });
   }, []);
@@ -38,18 +46,23 @@ export default function VerificationQueue() {
 
   const handleDecision = async (reportId, decision) => {
     setProcessing(reportId);
-    const statusMap = { verified: { status: "verified", verification_status: "verified" }, rejected: { status: "rejected", verification_status: "rejected" }, duplicate: { status: "duplicate", verification_status: "rejected" } };
+    const statusMap = { verified: { status: "verified", verification_status: "verified" }, rejected: { status: "rejected", verification_status: "rejected" }, duplicate: { status: "duplicate", verification_status: "duplicate" } };
     try {
+      const current = reports.find((report) => report.id === reportId);
+      if (current?.status === REPORT_STATUS.SUBMITTED) {
+        await reportsService.update(reportId, { status: REPORT_STATUS.PENDING });
+      }
       await reportsService.update(reportId, {
         ...statusMap[decision],
         moderator_notes: notes[reportId] || "",
       });
       await verificationsService.create({
         report_id: reportId,
-        reviewer_name: "Authority Demo User",
+        reviewer_id: isDemoMode() ? null : user.id,
+        reviewer_name: user.email,
         decision,
         notes: notes[reportId] || "",
-        is_demo: true,
+        is_demo: isDemoMode(),
       });
 
       // Log Active Learning Human Correction event
@@ -105,8 +118,9 @@ export default function VerificationQueue() {
           const trust = getTrustLabel(report.trust_weight || 1.0);
           const hasCv = report.cv_status !== "no_image";
           const isPotentialDuplicate = report.status === "duplicate";
+          const duplicateMatch = findPotentialDuplicates(report, reports)[0];
 
-          const mediaUrl = report.evidence_url || report.photo_url || report.image_url || report.video_url || report.media_url;
+          const mediaUrl = report.signed_evidence_url || report.evidence_url || report.photo_url || report.image_url || report.video_url || report.media_url;
           const isVideo = !!(report.video_url || (mediaUrl && (mediaUrl.includes(".mp4") || mediaUrl.includes(".webm") || mediaUrl.includes("video"))));
 
           return (
@@ -135,6 +149,11 @@ export default function VerificationQueue() {
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {isPotentialDuplicate && (
                         <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200">Possible Duplicate</span>
+                      )}
+                      {!isPotentialDuplicate && duplicateMatch && (
+                        <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full border border-amber-200">
+                          {Math.round(duplicateMatch.score * 100)}% duplicate signal
+                        </span>
                       )}
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                         report.verification_status === "verified" ? "bg-green-100 text-green-700" :

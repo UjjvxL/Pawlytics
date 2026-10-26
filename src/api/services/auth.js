@@ -1,9 +1,10 @@
 import { supabase } from '../supabaseClient.js';
+import { isDemoMode } from '@/lib/runtimeConfig';
 
 export const authService = {
   async me() {
     try {
-      const demoUserStr = localStorage.getItem('pawlytics_demo_user');
+      const demoUserStr = isDemoMode() && localStorage.getItem('pawlytics_demo_user');
       if (demoUserStr) {
         try {
           const parsed = JSON.parse(demoUserStr);
@@ -14,7 +15,7 @@ export const authService = {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !session) return null;
       
-      let userRole = session.user?.user_metadata?.role || 'admin';
+      let userRole = 'citizen';
       try {
         const { data: profile } = await supabase
           .from('users')
@@ -25,14 +26,14 @@ export const authService = {
           userRole = profile.role;
         }
       } catch (e) {
-        console.warn('Profile fetch warning (using session metadata role):', e);
+        console.warn('Profile fetch warning; using citizen role:', e);
       }
       
       return {
         id: session.user.id,
         email: session.user.email,
-        role: userRole,
-        ...session.user.user_metadata
+        ...session.user.user_metadata,
+        role: userRole
       };
     } catch (err) {
       console.error('me() exception:', err);
@@ -113,71 +114,25 @@ export const authService = {
     if (error) throw error;
   },
 
-  async signInWithGoogle(forceOAuth = false) {
-    if (forceOAuth) {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/`
-        }
-      });
-      if (error) throw error;
-      return data;
-    }
-
-    // Default seamless Google authentication mode
-    const googleUser = {
-      id: `google-user-${Date.now().toString().slice(-4)}`,
-      email: "citizen.google@noida.gov.in",
-      name: "Google Verified Citizen",
-      role: "citizen",
-      provider: "google"
-    };
-    localStorage.setItem("pawlytics_demo_user", JSON.stringify(googleUser));
-    
-    // Seed profile if not set
-    const existingProfile = localStorage.getItem("pawlytics_user_profile");
-    if (!existingProfile) {
-      localStorage.setItem("pawlytics_user_profile", JSON.stringify({
-        name: "Google Verified Citizen",
-        email: "citizen.google@noida.gov.in",
-        phone: "+91 98765 43210",
-        ward: "Knowledge Park 2 (IILM / Galgotias)",
-        role: "Citizen / Resident",
-        emergencyContact: "+91 98101 99999",
-        isComplete: false
-      }));
-    }
-    return googleUser;
+  async signInWithGoogle() {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/` }
+    });
+    if (error) throw error;
+    return data;
   },
 
   async sendPhoneOtp(phone) {
-    try {
-      const { data, error } = await supabase.auth.signInWithOtp({ phone });
-      if (error) throw error;
-      return data;
-    } catch (err) {
-      console.warn("Phone OTP warning (using demo OTP mode):", err);
-      return { phone, status: "otp_sent" };
-    }
+    const { data, error } = await supabase.auth.signInWithOtp({ phone });
+    if (error) throw error;
+    return data;
   },
 
   async verifyPhoneOtp(phone, token) {
-    try {
-      const { data, error } = await supabase.auth.verifyOtp({ phone, token, type: 'sms' });
-      if (error) throw error;
-      return data;
-    } catch (err) {
-      console.warn("Verify OTP fallback mode");
-      const phoneUser = {
-        id: `phone-user-${Date.now().toString().slice(-4)}`,
-        phone,
-        email: `citizen_${phone.replace(/[^0-9]/g, '')}@pawlytics.org`,
-        role: "citizen"
-      };
-      localStorage.setItem("pawlytics_demo_user", JSON.stringify(phoneUser));
-      return phoneUser;
-    }
+    const { data, error } = await supabase.auth.verifyOtp({ phone, token, type: 'sms' });
+    if (error) throw error;
+    return data;
   },
 
   async updateProfile(profileData) {

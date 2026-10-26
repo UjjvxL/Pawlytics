@@ -30,3 +30,14 @@ dist-ssr
 .env
 .vite
 scratch/
+
+# Android SDK, JDK & Binaries (exceeds GitHub 100MB limit)
+jdk17.zip
+cmdline-tools.zip
+jdk17/
+*.apk
+
+# Other nested repositories / folders
+Ship-Engine-Room-Safety-Monitor-/
+new_pawlytics/
+pawlytics-demo-hotfix/

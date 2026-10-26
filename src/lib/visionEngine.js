@@ -16,7 +16,7 @@ export async function detectAnimalsInImage(imageElement, canvasElement) {
       boxes: yoloResult.predictions,
       cvStatus: "processed",
       annotatedImage: yoloResult.annotatedImage,
-      modelUsed: yoloResult.modelUsed
+      modelUsed: "modelUsed" in yoloResult ? yoloResult.modelUsed : "YOLO detector"
     };
   } catch (err) {
     console.error("YOLO Vision Bridge error:", err);

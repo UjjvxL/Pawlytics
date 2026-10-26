@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { reportsService } from "@/api/services";
-import { ChevronLeft, ChevronRight, MapPin, Camera, Check, Info, Sparkles, ShieldCheck, ArrowLeft } from "lucide-react";
+import { evidenceService, reportsService } from "@/api/services";
+import { ChevronRight, MapPin, Camera, Check, ArrowLeft } from "lucide-react";
 import CameraVisionModal from "@/components/CameraVisionModal";
 import VoiceReportInput from "@/components/VoiceReportInput";
 import { DoggoSitting } from "@/components/DoggoIllustrations";
 import { saveReportOffline } from "@/lib/offlineSync";
+import { useAuth } from "@/lib/AuthContext";
+import { isDemoMode } from "@/lib/runtimeConfig";
+import { getReportExpiry, REPORT_STATUS } from "@/lib/reportLifecycle";
 
 const CATEGORIES = [
   { value: "sighting", label: "Dog Sighting", desc: "Dogs present but no interaction" },
@@ -58,6 +61,7 @@ const DEMO_COORDS = {
 
 export default function ReportIncident() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(null);
@@ -72,7 +76,8 @@ export default function ReportIncident() {
     location_label: "",
     ward: "",
     incident_timestamp: new Date().toISOString().slice(0, 16),
-    evidence_url: "",
+      evidence_url: "",
+      evidence_path: null,
     description: "",
     dog_count: 1,
     context_tags: [],
@@ -134,7 +139,9 @@ export default function ReportIncident() {
   const handleSubmit = async () => {
     setSubmitting(true);
 
-    const reportData = {
+    const clientSubmissionId = crypto.randomUUID();
+
+    let reportData = {
       ...form,
       incident_timestamp: new Date(form.incident_timestamp).toISOString(),
       group_detected: form.context_tags.includes("group_presence") || (cvResult?.group_detected ?? false),
@@ -142,10 +149,14 @@ export default function ReportIncident() {
       cv_confidence: cvResult ? cvResult.confidence / 100 : null,
       cv_group_detected: cvResult?.group_detected ?? null,
       cv_status: cvResult ? "processed" : "no_image",
-      status: "under_review",
+      status: REPORT_STATUS.SUBMITTED,
       verification_status: "pending",
-      is_demo: true,
-      trust_weight: 0.7,
+      reporter_id: isDemoMode() ? null : user?.id,
+      client_submission_id: clientSubmissionId,
+      submitted_at: new Date().toISOString(),
+      expires_at: getReportExpiry(form.incident_timestamp),
+      is_demo: isDemoMode(),
+      trust_weight: 0.5,
     };
 
     if (typeof navigator !== "undefined" && !navigator.onLine) {
@@ -156,6 +167,10 @@ export default function ReportIncident() {
     }
 
     try {
+      if (!isDemoMode() && reportData.evidence_url) {
+        const evidencePath = await evidenceService.uploadDataUrl(user.id, clientSubmissionId, reportData.evidence_url);
+        reportData = { ...reportData, evidence_path: evidencePath, evidence_url: null };
+      }
       const created = await reportsService.create(reportData);
       setSubmitted(created);
     } catch (e) {

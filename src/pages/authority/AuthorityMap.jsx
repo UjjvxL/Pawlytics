@@ -7,6 +7,7 @@ import RiskBadge from "@/components/RiskBadge";
 import { useTheme } from "@/lib/theme";
 import "leaflet/dist/leaflet.css";
 
+/** @type {[number, number]} */
 const DEMO_CENTER = [28.5740, 77.3410];
 
 function createIncidentIcon(severity, verified) {
@@ -32,6 +33,11 @@ export default function AuthorityMap() {
   const [showPois, setShowPois] = useState(true);
   const [timeWindow, setTimeWindow] = useState(30);
   const [selectedHotspot, setSelectedHotspot] = useState(null);
+  const layerControls = [
+    { label: "Hotspots", value: showHotspots, setValue: setShowHotspots },
+    { label: "Context POIs", value: showPois, setValue: setShowPois },
+    { label: "All reports", value: showAll, setValue: setShowAll },
+  ];
 
   useEffect(() => {
     Promise.all([
@@ -83,12 +89,12 @@ export default function AuthorityMap() {
           ))}
         </div>
         <div className="flex items-center gap-3 text-sm">
-          {[["Hotspots", showHotspots, setShowHotspots], ["Context POIs", showPois, setShowPois], ["All reports", showAll, setShowAll]].map(([l, v, s]) => (
-            <label key={l} className="flex items-center gap-2 cursor-pointer">
-              <div onClick={() => s(!v)} className={`w-8 h-4 rounded-full relative transition-colors ${v ? "bg-blue-900" : "bg-slate-300"}`}>
-                <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${v ? "translate-x-4" : "translate-x-0.5"}`} />
+          {layerControls.map(({ label, value, setValue }) => (
+            <label key={label} className="flex items-center gap-2 cursor-pointer">
+              <div onClick={() => setValue(!value)} className={`w-8 h-4 rounded-full relative transition-colors ${value ? "bg-blue-900" : "bg-slate-300"}`}>
+                <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${value ? "translate-x-4" : "translate-x-0.5"}`} />
               </div>
-              <span className="text-slate-600">{l}</span>
+              <span className="text-slate-600">{label}</span>
             </label>
           ))}
         </div>

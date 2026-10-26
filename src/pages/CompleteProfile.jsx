@@ -4,7 +4,7 @@ import { authService } from "@/api/services/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { User, Phone, MapPin, Shield, CheckCircle2, Sparkles, ArrowRight, Bell, PhoneCall } from "lucide-react";
+import { User, Phone, MapPin, Shield, CheckCircle2, ArrowRight, Bell, PhoneCall } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 
 const SECTORS = [

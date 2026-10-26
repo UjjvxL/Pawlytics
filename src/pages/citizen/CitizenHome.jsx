@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { reportsService, hotspotsService, alertsService, wardsService } from "@/api/services";
 import { MapPin, AlertTriangle, Navigation, Plus, Bell, HelpCircle, Shield, HeartPulse, Mic, Sparkles, ChevronRight, ChevronDown } from "lucide-react";
 import ArvEmergencyModal from "@/components/ArvEmergencyModal";
@@ -90,12 +90,12 @@ export default function CitizenHome() {
             </div>
             <div className="flex items-center gap-2">
               <ThemeToggle className="rounded-full bg-white/10 hover:bg-white/20 text-white p-2" />
-              <button className="relative p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors btn-press">
+              <Link to="/notifications" aria-label="Open notifications" className="relative p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors btn-press">
                 <Bell className="w-5 h-5 text-zinc-200" />
                 {alerts.length > 0 && (
                   <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full animate-ping" />
                 )}
-              </button>
+              </Link>
               <Link to="/authority" className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors btn-press" title="Authority Portal">
                 <Shield className="w-5 h-5 text-emerald-400" />
               </Link>

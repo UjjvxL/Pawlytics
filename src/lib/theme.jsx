@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
-const ThemeContext = createContext({ theme: "light", setTheme: () => {} });
+const ThemeContext = createContext({ theme: "light", setTheme: (_theme) => {} });
 const STORAGE_KEY = "pawlytics-theme";
 
 export function ThemeProvider({ children }) {

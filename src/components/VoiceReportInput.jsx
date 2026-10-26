@@ -16,7 +16,8 @@ export default function VoiceReportInput({ onStructuredVoiceResult }) {
 
   const startVoiceIngestion = () => {
     setErrorMsg("");
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const speechWindow = /** @type {any} */ (window);
+    const SpeechRecognition = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
       setErrorMsg("Web Speech API is not supported in this browser version. You can type description manually.");

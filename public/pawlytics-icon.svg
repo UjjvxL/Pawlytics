@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Pawlytics">
+  <rect width="512" height="512" rx="112" fill="#1a2744"/>
+  <g fill="#10b981">
+    <ellipse cx="144" cy="208" rx="35" ry="42"/>
+    <ellipse cx="224" cy="152" rx="38" ry="45"/>
+    <ellipse cx="320" cy="152" rx="38" ry="45"/>
+    <ellipse cx="400" cy="208" rx="35" ry="42"/>
+    <path d="M272 240c-80 0-144 48-144 112 0 40 40 56 80 56h128c40 0 80-16 80-56 0-64-64-112-144-112z"/>
+  </g>
+</svg>

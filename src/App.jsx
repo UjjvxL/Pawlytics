@@ -10,6 +10,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import RoleRoute from '@/components/RoleRoute';
 import { ThemeProvider } from '@/lib/theme';
 import { LocationProvider } from '@/lib/locationContext';
+import { isDemoMode } from '@/lib/runtimeConfig';
 
 import CompleteProfile from '@/pages/CompleteProfile';
 
@@ -27,6 +28,7 @@ import ReportIncident from '@/pages/citizen/ReportIncident';
 import RouteCheck from '@/pages/citizen/RouteCheck';
 import MyReports from '@/pages/citizen/MyReports';
 import SafetyGuide from '@/pages/citizen/SafetyGuide';
+import Notifications from '@/pages/citizen/Notifications';
 
 // Authority pages
 import AuthorityLayout from '@/components/AuthorityLayout';
@@ -85,13 +87,14 @@ const AuthenticatedApp = () => {
           <Route path="/routes" element={<RouteCheck />} />
           <Route path="/my-reports" element={<MyReports />} />
           <Route path="/safety" element={<SafetyGuide />} />
+          <Route path="/notifications" element={<Notifications />} />
         </Route>
 
         {/* Report is full-screen (no bottom nav) */}
         <Route path="/report" element={<ReportIncident />} />
 
-        {/* Authority Dashboard — admin role required */}
-        <Route element={<RoleRoute requiredRole="admin" />}>
+        {/* Authority Dashboard — operational authority role required */}
+        <Route element={<RoleRoute allowedRoles={["admin", "moderator", "dispatcher", "field_officer"]} />}>
           <Route path="/authority" element={<AuthorityLayout />}>
             <Route index element={<AuthorityOverview />} />
             <Route path="map" element={<AuthorityMap />} />
@@ -120,7 +123,7 @@ function App() {
       <AuthProvider>
         <LocationProvider>
           <QueryClientProvider client={queryClientInstance}>
-            <Router>
+            <Router basename={isDemoMode() ? "/demo" : undefined}>
               <ScrollToTop />
               <AuthenticatedApp />
             </Router>

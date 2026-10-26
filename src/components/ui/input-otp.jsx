@@ -4,24 +4,23 @@ import { Minus } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
-/** @type {any} */
-const InputOTP = React.forwardRef(({ className, containerClassName, ...props }, ref) => (
-  <OTPInput
+const OTPInputAny = /** @type {any} */ (OTPInput)
+
+const InputOTP = /** @type {any} */ (React.forwardRef(/** @type {any} */ (({ className, containerClassName, ...props }, ref) => (
+  <OTPInputAny
     ref={ref}
     containerClassName={cn("flex items-center gap-2 has-[:disabled]:opacity-50", containerClassName)}
     className={cn("disabled:cursor-not-allowed", className)}
     {...props} />
-))
+))))
 InputOTP.displayName = "InputOTP"
 
-/** @type {any} */
-const InputOTPGroup = React.forwardRef(({ className, ...props }, ref) => (
+const InputOTPGroup = /** @type {any} */ (React.forwardRef(/** @type {any} */ (({ className, ...props }, ref) => (
   <div ref={ref} className={cn("flex items-center", className)} {...props} />
-))
+))))
 InputOTPGroup.displayName = "InputOTPGroup"
 
-/** @type {any} */
-const InputOTPSlot = React.forwardRef(({ index, className, ...props }, ref) => {
+const InputOTPSlot = /** @type {any} */ (React.forwardRef(/** @type {any} */ (({ index, className, ...props }, ref) => {
   const inputOTPContext = React.useContext(OTPInputContext)
   const { char, hasFakeCaret, isActive } = inputOTPContext.slots[index]
 
@@ -43,7 +42,7 @@ const InputOTPSlot = React.forwardRef(({ index, className, ...props }, ref) => {
       )}
     </div>)
   );
-})
+})))
 InputOTPSlot.displayName = "InputOTPSlot"
 
 const InputOTPSeparator = React.forwardRef(({ ...props }, ref) => (

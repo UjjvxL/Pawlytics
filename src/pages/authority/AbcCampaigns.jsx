@@ -4,7 +4,7 @@
  */
 
 import { useState } from "react";
-import { ShieldCheck, Syringe, Scissors, MapPin, Plus, CheckCircle2, Calendar, AlertCircle } from "lucide-react";
+import { ShieldCheck, Syringe, Scissors, MapPin, Plus, CheckCircle2, Calendar } from "lucide-react";
 
 const INITIAL_ABC_RECORDS = [
   {

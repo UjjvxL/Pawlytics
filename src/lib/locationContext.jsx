@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useGpsLocation } from "@/lib/gps";
 
-const LocationContext = createContext();
+const LocationContext = createContext(null);
 
 export const POPULAR_LOCATIONS = [
   { name: "Sector 62 Noida", zone: "Noida Zone", coords: [28.6280, 77.3649] },

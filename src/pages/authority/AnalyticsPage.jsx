@@ -10,17 +10,33 @@ import NationalConflictHeatmap from "@/components/NationalConflictHeatmap";
 export default function AnalyticsPage() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    reportsService.filter({ is_demo: true }).then(r => {
-      setReports(r);
-      setLoading(false);
-    });
+    reportsService.filter({ is_demo: true })
+      .then(setReports)
+      .catch(setError)
+      .finally(() => setLoading(false));
   }, []);
 
   if (loading) {
     return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-4 border-slate-200 border-t-blue-900 rounded-full animate-spin" /></div>;
   }
+  if (error) return <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-5 text-rose-900">Analytics could not be loaded. Verify the production migration and your connection.</div>;
+
+  const hoursBetween = (start, end) => start && end ? Math.max(0, (new Date(end).getTime() - new Date(start).getTime()) / 3_600_000) : null;
+  const median = (values) => {
+    const sorted = values.filter(Number.isFinite).sort((a, b) => a - b);
+    if (!sorted.length) return null;
+    const middle = Math.floor(sorted.length / 2);
+    return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+  };
+  const verifiedReports = reports.filter((report) => report.verification_status === "verified");
+  const resolvedReports = reports.filter((report) => report.status === "resolved");
+  const verificationHours = median(reports.map((report) => hoursBetween(report.submitted_at || report.created_at, report.verified_at)));
+  const resolutionHours = median(reports.map((report) => hoursBetween(report.assigned_at || report.verified_at, report.resolved_at)));
+  const falseReportRate = reports.length ? reports.filter((report) => report.status === "rejected").length / reports.length * 100 : 0;
+  const repeatAreas = new Set(verifiedReports.map((report) => report.ward).filter(Boolean)).size;
 
   // Reports by severity
   const severityData = [1, 2, 3, 4, 5].map(s => ({
@@ -77,7 +93,8 @@ export default function AnalyticsPage() {
     verified: reports.filter(r => r.ward === w && r.verification_status === "verified").length,
   })).sort((a, b) => b.total - a.total);
 
-  const CustomTooltip = ({ active, payload, label }) => {
+  /** @param {{active?: boolean, payload?: Array<{color?: string, name?: string, value?: string | number}>, label?: string}} props */
+  const CustomTooltip = ({ active, payload, label } = {}) => {
     if (active && payload?.length) {
       return (
         <div className="bg-white border border-slate-200 rounded-lg px-3 py-2 shadow-lg text-xs">
@@ -97,6 +114,22 @@ export default function AnalyticsPage() {
         <h1 className="text-2xl font-bold text-slate-800 font-display">Analytics</h1>
         <p className="text-slate-500 text-sm mt-1">Noida Pilot · {reports.length} total reports</p>
       </div>
+
+      <section aria-label="Operational metrics" className="grid grid-cols-2 xl:grid-cols-5 gap-3">
+        {[
+          ["Reports submitted", reports.length, "No user movement stored"],
+          ["Median verification", verificationHours == null ? "—" : `${verificationHours.toFixed(1)}h`, "Submission to verification"],
+          ["Median resolution", resolutionHours == null ? "—" : `${resolutionHours.toFixed(1)}h`, "Assignment to resolution"],
+          ["Resolution rate", reports.length ? `${Math.round(resolvedReports.length / reports.length * 100)}%` : "0%", `${resolvedReports.length} resolved`],
+          ["Rejected rate", `${falseReportRate.toFixed(1)}%`, `${repeatAreas} repeat-report areas`],
+        ].map(([label, value, detail]) => (
+          <div key={label} className="rounded-xl border border-slate-200 bg-white p-4">
+            <div className="text-xs font-medium text-slate-500">{label}</div>
+            <div className="text-2xl font-bold text-slate-900 mt-1">{value}</div>
+            <div className="text-[11px] text-slate-400 mt-1">{detail}</div>
+          </div>
+        ))}
+      </section>
 
       {/* Reports over time */}
       <div className="bg-white rounded-xl border border-slate-200 p-5">

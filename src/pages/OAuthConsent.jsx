@@ -25,6 +25,7 @@ export default function OAuthConsent() {
           setError("This authorization link is invalid or has expired.");
           return;
         }
+        /** @type {Record<string, string>} */
         const infoHeaders = {};
         if (appParams.token) infoHeaders.Authorization = "Bearer " + appParams.token;
         const res = await fetch(

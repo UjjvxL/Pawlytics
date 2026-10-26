@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FileText, CheckSquare, AlertTriangle, Flame, MapPin, Zap, TrendingUp, ShieldAlert, ArrowRight } from "lucide-react";
 import { AreaChart, Area, BarChart, Bar, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { RISK_LEVELS, SEVERITY_LABELS, CATEGORY_LABELS } from "@/lib/riskEngine";
+import { RISK_LEVELS, SEVERITY_LABELS } from "@/lib/riskEngine";
 import RiskBadge from "@/components/RiskBadge";
 import { DoggoWalking } from "@/components/DoggoIllustrations";
 

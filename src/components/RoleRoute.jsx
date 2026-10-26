@@ -1,40 +1,13 @@
-import { useEffect, useState } from "react";
 import { Link, Outlet } from "react-router-dom";
-import { authService } from "@/api/services/auth";
+import { useAuth } from "@/lib/AuthContext";
 import { ShieldAlert, Home } from "lucide-react";
 import DemoBanner from "@/components/DemoBanner";
 
-export default function RoleRoute({ requiredRole = "admin" }) {
-  const [status, setStatus] = useState("loading");
-  const [role, setRole] = useState(null);
+export default function RoleRoute({ allowedRoles = ["admin"] }) {
+  const { user } = useAuth();
+  const role = user?.role;
 
-  useEffect(() => {
-    let cancelled = false;
-    authService.me()
-      .then((u) => {
-        if (cancelled) return;
-        setRole(u?.role || "admin");
-        setStatus("ready");
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setRole("admin");
-        setStatus("ready");
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  if (status === "loading") {
-    return (
-      <div className="flex items-center justify-center h-screen bg-slate-50 dark:bg-slate-900">
-        <div className="w-8 h-8 border-4 border-slate-200 dark:border-slate-700 border-t-blue-900 rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (role !== requiredRole) {
+  if (!allowedRoles.includes(role)) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
         <DemoBanner />

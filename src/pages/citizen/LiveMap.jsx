@@ -2,14 +2,15 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { MapContainer, TileLayer, Circle, Popup, Marker, useMap } from "react-leaflet";
 import L from "leaflet";
-import { reportsService, hotspotsService, contextPOIsService } from "@/api/services";
+import { reportsService, hotspotsService, contextPOIsService, reportConfirmationsService } from "@/api/services";
 import { RISK_LEVELS, CATEGORY_LABELS, SEVERITY_LABELS } from "@/lib/riskEngine";
 import RiskBadge, { ConfidenceBadge } from "@/components/RiskBadge";
-import { Filter, X, AlertTriangle, Phone, ShieldAlert, MapPin, Clock, Navigation, Sparkles, LocateFixed, ChevronDown, Home } from "lucide-react";
+import { Filter, X, AlertTriangle, Phone, ShieldAlert, MapPin, Clock, Navigation, LocateFixed, ChevronDown, Home } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useGpsLocation } from "@/lib/gps";
 import { useLocationState } from "@/lib/locationContext";
 import LocationSelectorModal from "@/components/LocationSelectorModal";
+import { useAuth } from "@/lib/AuthContext";
 import "leaflet/dist/leaflet.css";
 
 // Fly map to user location or selected coordinates when changed
@@ -98,6 +99,7 @@ const SEVERITY_FILTERS = [
 ];
 
 export default function LiveMap() {
+  const { user } = useAuth();
   const { theme } = useTheme();
   const { userLocation, gpsLoading, requestLocation } = useGpsLocation();
   const { currentLocality, currentZone, coords } = useLocationState();
@@ -114,10 +116,21 @@ export default function LiveMap() {
   const [showPois, setShowPois] = useState(true);
   const [showHotspots, setShowHotspots] = useState(true);
   const [selectedSeverities, setSelectedSeverities] = useState([]);
+  const [confirmationState, setConfirmationState] = useState({});
+
+  const confirmReport = async (reportId, decision) => {
+    setConfirmationState((state) => ({ ...state, [reportId]: "saving" }));
+    try {
+      await reportConfirmationsService.decide(reportId, user.id, decision);
+      setConfirmationState((state) => ({ ...state, [reportId]: decision }));
+    } catch {
+      setConfirmationState((state) => ({ ...state, [reportId]: "error" }));
+    }
+  };
 
   useEffect(() => {
     Promise.all([
-      reportsService.filter({ is_demo: true }),
+      reportsService.activePublic(30),
       hotspotsService.filter({ is_demo: true, is_active: true }),
       contextPOIsService.filter({ is_demo: true }),
     ]).then(([r, h, p]) => {
@@ -231,6 +244,13 @@ export default function LiveMap() {
                   {r.description && (
                     <div className="text-xs text-slate-700 mt-2 border-t pt-2 leading-relaxed">{r.description}</div>
                   )}
+                  {isVerified && !r.is_owner && (
+                    <div className="mt-2 pt-2 border-t flex gap-2">
+                      <button disabled={confirmationState[r.id] === "saving"} onClick={() => confirmReport(r.id, "confirm")} className="flex-1 rounded bg-emerald-100 text-emerald-800 px-2 py-1 text-[11px] font-semibold disabled:opacity-50">{confirmationState[r.id] === "confirm" ? "Confirmed" : "I saw this"}</button>
+                      <button disabled={confirmationState[r.id] === "saving"} onClick={() => confirmReport(r.id, "dispute")} className="flex-1 rounded bg-zinc-100 text-zinc-700 px-2 py-1 text-[11px] font-semibold disabled:opacity-50">{confirmationState[r.id] === "dispute" ? "Disputed" : "Not accurate"}</button>
+                    </div>
+                  )}
+                  {confirmationState[r.id] === "error" && <div role="alert" className="text-[11px] text-rose-700 mt-1">Could not save your response.</div>}
                 </div>
               </Popup>
             </Marker>

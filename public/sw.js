@@ -1,12 +1,10 @@
 /* Pawlytics PWA Offline Service Worker */
 
-const CACHE_NAME = 'pawlytics-v1';
+const CACHE_NAME = 'pawlytics-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
-  '/manifest.json',
-  '/src/main.jsx',
-  '/src/index.css'
+  '/manifest.json'
 ];
 
 // Install Event
@@ -37,15 +35,16 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch Event — Network-first with Cache Fallback for offline resilience
+// Navigations are network-first. Hashed Vite assets are cache-first.
 self.addEventListener('fetch', (event) => {
   // Skip non-GET requests and cross-origin analytics/supabase calls
   if (event.request.method !== 'GET' || !event.request.url.startsWith(self.location.origin)) {
     return;
   }
 
+  const isNavigation = event.request.mode === 'navigate';
   event.respondWith(
-    fetch(event.request)
+    (isNavigation ? fetch(event.request) : caches.match(event.request).then((cached) => cached || fetch(event.request)))
       .then((networkResponse) => {
         if (networkResponse && networkResponse.status === 200) {
           const responseClone = networkResponse.clone();
@@ -60,10 +59,23 @@ self.addEventListener('fetch', (event) => {
           if (cachedResponse) {
             return cachedResponse;
           }
-          if (event.request.headers.get('accept')?.includes('text/html')) {
+          if (isNavigation) {
             return caches.match('/index.html');
           }
         });
       })
   );
+});
+
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'pawlytics-report-sync') {
+    event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clients) => clients.forEach((client) => client.postMessage({ type: 'SYNC_REPORTS' }))));
+  }
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || '/notifications';
+  event.waitUntil(self.clients.openWindow(url));
 });
